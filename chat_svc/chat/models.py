@@ -28,6 +28,24 @@ class Message(models.Model):
     sender = models.ForeignKey(User, on_delete=models.CASCADE)
     content = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    previous_hash = models.CharField(max_length=64, blank=True)
+    hash = models.CharField(max_length=64, blank=True)
+
+    def save(self, *args, **kwargs):
+        if not self.hash:
+            prev = (
+                Message.objects.filter(thread=self.thread)
+                .order_by("-created_at")
+                .first()
+            )
+            prev_hash = prev.hash if prev else ""
+            self.previous_hash = prev_hash
+            import hashlib
+
+            sha = hashlib.sha256()
+            sha.update((prev_hash + str(self.sender_id) + self.content).encode())
+            self.hash = sha.hexdigest()
+        super().save(*args, **kwargs)
 
 class QuestionTemplate(models.Model):
     """Reusable template for structured questions."""
@@ -52,3 +70,22 @@ class ReadReceipt(models.Model):
 
     class Meta:
         unique_together = ("message", "user")
+
+
+class Attachment(models.Model):
+    """File attachment linked to a message."""
+    message = models.ForeignKey(
+        Message, related_name="attachments", on_delete=models.CASCADE
+    )
+    file = models.FileField(upload_to="attachments/")
+    checksum = models.CharField(max_length=64, editable=False, blank=True)
+
+    def save(self, *args, **kwargs):
+        if self.file and not self.checksum:
+            import hashlib
+
+            sha = hashlib.sha256()
+            for chunk in self.file.chunks():
+                sha.update(chunk)
+            self.checksum = sha.hexdigest()
+        super().save(*args, **kwargs)

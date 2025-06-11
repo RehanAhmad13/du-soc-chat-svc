@@ -2,8 +2,20 @@ from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .models import ChatThread, Message, QuestionTemplate, StructuredReply
-from .serializers import ChatThreadSerializer, MessageSerializer, QuestionTemplateSerializer
+from rest_framework.parsers import MultiPartParser, FormParser
+from .models import (
+    ChatThread,
+    Message,
+    QuestionTemplate,
+    StructuredReply,
+    Attachment,
+)
+from .serializers import (
+    ChatThreadSerializer,
+    MessageSerializer,
+    QuestionTemplateSerializer,
+    AttachmentSerializer,
+)
 from . import integration
 
 
@@ -41,6 +53,14 @@ class ChatThreadViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(thread)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+    @action(detail=True, methods=["get"], url_path="export")
+    def export(self, request, pk=None):
+        """Export all messages for this thread."""
+        thread = self.get_object()
+        messages = thread.messages.order_by("created_at")
+        data = MessageSerializer(messages, many=True).data
+        return Response(data)
+
 class MessageViewSet(viewsets.ModelViewSet):
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
@@ -57,3 +77,23 @@ class MessageViewSet(viewsets.ModelViewSet):
         if template and answer is not None:
             StructuredReply.objects.create(message=msg, template=template, answer=answer)
         integration.update_ticket_timeline(msg.thread.incident_id, msg.content)
+
+    @action(detail=False, methods=["get"], url_path="search")
+    def search(self, request):
+        """Search messages by content for the current tenant."""
+        q = request.query_params.get("q", "")
+        tenant_id = request.user.tenant_id
+        msgs = self.queryset.filter(thread__tenant_id=tenant_id, content__icontains=q)
+        serializer = self.get_serializer(msgs, many=True)
+        return Response(serializer.data)
+
+
+class AttachmentViewSet(viewsets.ModelViewSet):
+    queryset = Attachment.objects.all()
+    serializer_class = AttachmentSerializer
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def get_queryset(self):
+        tenant_id = self.request.user.tenant_id
+        return self.queryset.filter(message__thread__tenant_id=tenant_id)
