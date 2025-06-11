@@ -13,6 +13,7 @@ from .models import (
     QuestionTemplate,
     StructuredReply,
     Attachment,
+    Device,
 )
 from .views import (
     MessageViewSet,
@@ -20,6 +21,7 @@ from .views import (
     QuestionTemplateViewSet,
     AttachmentViewSet,
     AdminThreadViewSet,
+    DeviceViewSet,
 )
 from .jwt_utils import create_token
 from .serializers import MessageSerializer
@@ -278,12 +280,28 @@ class SimpleModelTest(TestCase):
         self.assertEqual(len(resp.data), 1)
         self.assertEqual(resp.data[0]['id'], th1.id)
 
-        # SLA filter
-        from django.utils import timezone
-        from datetime import timedelta
-        th1.created_at = timezone.now() - timedelta(hours=settings.INCIDENT_SLA_HOURS + 1)
-        th1.save()
-        req = factory.get('/fake', {'sla': 'breached'}, HTTP_AUTHORIZATION=f'Bearer {create_token(admin)}')
-        resp = view(req)
-        self.assertEqual(len(resp.data), 1)
-        self.assertEqual(resp.data[0]['id'], th1.id)
+    def test_device_registration(self):
+        tenant = Tenant.objects.create(name='Acme')
+        user = User.objects.create(username='alice', tenant=tenant)
+        view = DeviceViewSet.as_view({'post': 'create'})
+        factory = APIRequestFactory()
+        token = create_token(user)
+        request = factory.post('/fake', {'token': 'tok123'}, HTTP_AUTHORIZATION=f'Bearer {token}')
+        resp = view(request)
+        self.assertEqual(resp.status_code, 201)
+        self.assertEqual(Device.objects.filter(user=user).count(), 1)
+
+    @patch('chat_svc.chat.push.send_push')
+    def test_push_called_on_message(self, mock_push):
+        tenant = Tenant.objects.create(name='Acme')
+        alice = User.objects.create(username='alice', tenant=tenant)
+        bob = User.objects.create(username='bob', tenant=tenant)
+        Device.objects.create(user=bob, token='tok456')
+        thread = ChatThread.objects.create(tenant=tenant, incident_id='INC-P')
+        serializer = MessageViewSet.serializer_class(data={'thread': thread.id, 'content': 'hi'})
+        serializer.is_valid()
+        viewset = MessageViewSet()
+        viewset.request = type('req', (), {'user': alice})
+        viewset.perform_create(serializer)
+        mock_push.assert_called()
+

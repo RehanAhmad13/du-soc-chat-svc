@@ -6,6 +6,7 @@ from .views import (
     MessageViewSet,
     QuestionTemplateViewSet,
     AttachmentViewSet,
+    DeviceViewSet,
     AdminThreadViewSet,
 )
 
@@ -14,6 +15,7 @@ router.register('threads', ChatThreadViewSet)
 router.register('messages', MessageViewSet)
 router.register('templates', QuestionTemplateViewSet)
 router.register('attachments', AttachmentViewSet)
+router.register('devices', DeviceViewSet, basename='device')
 
 admin_router = DefaultRouter()
 admin_router.register('threads', AdminThreadViewSet, basename='admin-thread')

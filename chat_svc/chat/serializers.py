@@ -8,6 +8,7 @@ from .models import (
     QuestionTemplate,
     StructuredReply,
     Attachment,
+    Device,
 )
 
 class MessageSerializer(serializers.ModelSerializer):
@@ -99,3 +100,10 @@ class ChatThreadSerializer(serializers.ModelSerializer):
         model = ChatThread
         fields = ['id', 'tenant', 'incident_id', 'created_at', 'messages', 'sla_status']
         read_only_fields = ['tenant', 'created_at']
+
+
+class DeviceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Device
+        fields = ['id', 'user', 'token', 'created_at']
+        read_only_fields = ['user', 'created_at']

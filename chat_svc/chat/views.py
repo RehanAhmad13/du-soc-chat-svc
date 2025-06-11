@@ -15,14 +15,16 @@ from .models import (
     QuestionTemplate,
     StructuredReply,
     Attachment,
+    Device,
 )
 from .serializers import (
     ChatThreadSerializer,
     MessageSerializer,
     QuestionTemplateSerializer,
     AttachmentSerializer,
+    DeviceSerializer,
 )
-from . import integration, event_bus
+from . import integration, event_bus, push
 class ObtainJWTView(APIView):
     permission_classes = []
     def post(self, request):
@@ -68,6 +70,8 @@ class ChatThreadViewSet(viewsets.ModelViewSet):
                 "incident_id": thread.incident_id,
             },
         )
+        tokens = Device.objects.filter(user__tenant_id=tenant_id).values_list("token", flat=True)
+        push.send_push(tokens, "New thread", f"Incident {thread.incident_id}")
 
     @action(detail=False, methods=['post'], url_path='from-incident/(?P<incident_id>[^/.]+)')
     def from_incident(self, request, incident_id=None):
@@ -92,6 +96,8 @@ class ChatThreadViewSet(viewsets.ModelViewSet):
                 "incident_id": incident_id,
             },
         )
+        tokens = Device.objects.filter(user__tenant_id=tenant_id).values_list("token", flat=True)
+        push.send_push(tokens, "New thread", f"Incident {incident_id}")
         serializer = self.get_serializer(thread)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -129,6 +135,10 @@ class MessageViewSet(viewsets.ModelViewSet):
                 "sender_id": msg.sender_id,
             },
         )
+        tokens = Device.objects.filter(
+            user__tenant_id=msg.thread.tenant_id
+        ).exclude(user=msg.sender).values_list("token", flat=True)
+        push.send_push(tokens, "New message", msg.content)
 
     @action(detail=False, methods=["get"], url_path="search")
     def search(self, request):
@@ -149,6 +159,18 @@ class AttachmentViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         tenant_id = self.request.user.tenant_id
         return self.queryset.filter(message__thread__tenant_id=tenant_id)
+
+
+class DeviceViewSet(viewsets.ModelViewSet):
+    queryset = Device.objects.all()
+    serializer_class = DeviceSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return self.queryset.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
 
 
 class AdminThreadViewSet(viewsets.ReadOnlyModelViewSet):
