@@ -9,6 +9,7 @@ ITSM_API_TOKEN = os.environ.get('ITSM_API_TOKEN')
 INCIDENT_SLA_HOURS = int(os.environ.get('INCIDENT_SLA_HOURS', '24'))
 KAFKA_BOOTSTRAP_SERVERS = os.environ.get('KAFKA_BOOTSTRAP_SERVERS')
 REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+FCM_SERVER_KEY = os.environ.get('FCM_SERVER_KEY')
 DEBUG = True
 ALLOWED_HOSTS = ['*']
 

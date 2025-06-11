@@ -118,3 +118,16 @@ class Attachment(models.Model):
             self.checksum = sha.hexdigest()
             self.file = ContentFile(data, name=self.file.name)
         super().save(*args, **kwargs)
+
+
+class Device(models.Model):
+    """Mobile device token for push notifications."""
+    user = models.ForeignKey(User, related_name="devices", on_delete=models.CASCADE)
+    token = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("user", "token")
+
+    def __str__(self) -> str:
+        return f"{self.user}:{self.token[:8]}"
