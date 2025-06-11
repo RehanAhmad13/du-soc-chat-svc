@@ -49,7 +49,16 @@ class ChatThreadViewSet(viewsets.ModelViewSet):
     def from_incident(self, request, incident_id=None):
         """Create a chat thread from an incident card."""
         tenant_id = request.user.tenant_id
+        metadata = request.data.get('metadata', {})
         thread = ChatThread.objects.create(tenant_id=tenant_id, incident_id=incident_id)
+        templates = QuestionTemplate.objects.filter(tenant_id=tenant_id)
+        for tmpl in templates:
+            try:
+                content = tmpl.render(metadata)
+            except ValueError:
+                # Skip templates with missing placeholders
+                continue
+            Message.objects.create(thread=thread, sender=request.user, content=content)
         serializer = self.get_serializer(thread)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
