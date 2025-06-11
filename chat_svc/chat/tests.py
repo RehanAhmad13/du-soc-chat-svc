@@ -47,6 +47,17 @@ class SimpleModelTest(TestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(ChatThread.objects.filter(incident_id='INC-2').count(), 1)
 
+    @patch('chat_svc.chat.event_bus.publish_event')
+    def test_thread_create_emits_event(self, mock_pub):
+        tenant = Tenant.objects.create(name='Acme')
+        user = User.objects.create(username='alice', tenant=tenant)
+        viewset = ChatThreadViewSet()
+        viewset.request = type('req', (), {'user': user})
+        serializer = ChatThreadViewSet.serializer_class(data={'incident_id': 'INC-9'})
+        self.assertTrue(serializer.is_valid())
+        viewset.perform_create(serializer)
+        mock_pub.assert_called()
+
     @patch('chat_svc.chat.integration.update_ticket_timeline')
     def test_message_triggers_ticket_update(self, mock_update):
         tenant = Tenant.objects.create(name='Acme')
@@ -58,6 +69,18 @@ class SimpleModelTest(TestCase):
         viewset.request = type('req', (), {'user': user})
         viewset.perform_create(serializer)
         mock_update.assert_called_with('INC-3', 'hi')
+
+    @patch('chat_svc.chat.event_bus.publish_event')
+    def test_message_publishes_event(self, mock_pub):
+        tenant = Tenant.objects.create(name='Acme')
+        user = User.objects.create(username='alice', tenant=tenant)
+        thread = ChatThread.objects.create(tenant=tenant, incident_id='INC-EV')
+        serializer = MessageViewSet.serializer_class(data={'thread': thread.id, 'content': 'hi'})
+        serializer.is_valid()
+        viewset = MessageViewSet()
+        viewset.request = type('req', (), {'user': user})
+        viewset.perform_create(serializer)
+        mock_pub.assert_called()
 
     def test_question_template_and_structured_reply(self):
         tenant = Tenant.objects.create(name='Acme')

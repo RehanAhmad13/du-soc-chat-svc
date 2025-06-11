@@ -7,6 +7,7 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'dummy-secret-key')
 ITSM_API_URL = os.environ.get('ITSM_API_URL')
 ITSM_API_TOKEN = os.environ.get('ITSM_API_TOKEN')
 INCIDENT_SLA_HOURS = int(os.environ.get('INCIDENT_SLA_HOURS', '24'))
+KAFKA_BOOTSTRAP_SERVERS = os.environ.get('KAFKA_BOOTSTRAP_SERVERS')
 DEBUG = True
 ALLOWED_HOSTS = ['*']
 

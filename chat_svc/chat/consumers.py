@@ -3,6 +3,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from django.contrib.auth.models import AnonymousUser
 from .models import ChatThread, Message, ReadReceipt
+from . import event_bus
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -35,6 +36,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
             content = data.get("content", "")
             message = await database_sync_to_async(Message.objects.create)(
                 thread=self.thread, sender=self.scope["user"], content=content
+            )
+            event_bus.publish_event(
+                "chat-events",
+                {
+                    "type": "message_created",
+                    "message_id": message.id,
+                    "thread_id": self.thread.id,
+                    "tenant_id": self.thread.tenant_id,
+                    "sender_id": self.scope["user"].id,
+                },
             )
             await self.channel_layer.group_send(
                 self.group_name,
