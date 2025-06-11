@@ -2,6 +2,7 @@ from django.test import TestCase
 from django.contrib.auth import get_user_model
 from rest_framework.test import APIRequestFactory
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.conf import settings
 from unittest.mock import patch
 from . import integration
 from .models import (
@@ -17,6 +18,7 @@ from .views import (
     ChatThreadViewSet,
     QuestionTemplateViewSet,
     AttachmentViewSet,
+    AdminThreadViewSet,
 )
 from .serializers import MessageSerializer
 
@@ -170,3 +172,45 @@ class SimpleModelTest(TestCase):
             json={'message': 'hello'},
             timeout=5
         )
+
+    def test_admin_thread_filtering(self):
+        t1 = Tenant.objects.create(name='T1')
+        t2 = Tenant.objects.create(name='T2')
+        admin = User.objects.create(username='admin', tenant=t1, is_staff=True)
+        u2 = User.objects.create(username='bob', tenant=t2)
+        th1 = ChatThread.objects.create(tenant=t1, incident_id='INC-A')
+        th2 = ChatThread.objects.create(tenant=t2, incident_id='INC-B')
+
+        view = AdminThreadViewSet.as_view({'get': 'list'})
+        factory = APIRequestFactory()
+
+        # non-admin rejected
+        req = factory.get('/fake')
+        req.user = u2
+        resp = view(req)
+        self.assertEqual(resp.status_code, 403)
+
+        # filter by tenant
+        req = factory.get('/fake', {'tenant': t2.id})
+        req.user = admin
+        resp = view(req)
+        self.assertEqual(len(resp.data), 1)
+        self.assertEqual(resp.data[0]['id'], th2.id)
+
+        # filter by incident
+        req = factory.get('/fake', {'incident': 'INC-A'})
+        req.user = admin
+        resp = view(req)
+        self.assertEqual(len(resp.data), 1)
+        self.assertEqual(resp.data[0]['id'], th1.id)
+
+        # SLA filter
+        from django.utils import timezone
+        from datetime import timedelta
+        th1.created_at = timezone.now() - timedelta(hours=settings.INCIDENT_SLA_HOURS + 1)
+        th1.save()
+        req = factory.get('/fake', {'sla': 'breached'})
+        req.user = admin
+        resp = view(req)
+        self.assertEqual(len(resp.data), 1)
+        self.assertEqual(resp.data[0]['id'], th1.id)
