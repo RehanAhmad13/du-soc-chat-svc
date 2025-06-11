@@ -8,6 +8,7 @@ ITSM_API_URL = os.environ.get('ITSM_API_URL')
 ITSM_API_TOKEN = os.environ.get('ITSM_API_TOKEN')
 INCIDENT_SLA_HOURS = int(os.environ.get('INCIDENT_SLA_HOURS', '24'))
 KAFKA_BOOTSTRAP_SERVERS = os.environ.get('KAFKA_BOOTSTRAP_SERVERS')
+REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
 DEBUG = True
 ALLOWED_HOSTS = ['*']
 
@@ -97,7 +98,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CHANNEL_LAYERS = {
     'default': {
-        'BACKEND': 'channels.layers.InMemoryChannelLayer'
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [REDIS_URL]
+        }
     }
 }
 
