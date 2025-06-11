@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from rest_framework.test import APIRequestFactory
 from django.core.files.uploadedfile import SimpleUploadedFile
 from unittest.mock import patch
+from . import integration
 from .models import (
     Tenant,
     ChatThread,
@@ -159,3 +160,13 @@ class SimpleModelTest(TestCase):
         request.user = user
         response = view(request)
         self.assertEqual(response.status_code, 400)
+
+    @patch('chat_svc.chat.integration.requests.post')
+    def test_update_ticket_timeline_posts(self, mock_post):
+        with self.settings(ITSM_API_URL='http://itsm/api'):
+            integration.update_ticket_timeline('INC-99', 'hello')
+        mock_post.assert_called_with(
+            'http://itsm/api/incidents/INC-99/timeline',
+            json={'message': 'hello'},
+            timeout=5
+        )
