@@ -31,7 +31,7 @@ SOC administrators define question templates that capture structured fields (tex
 Messages are stored in an append-only model with creation timestamps and immutable hashes. Files are stored in a secure object store with SHA-256 checksums recorded for audit trails. Retention policies are applied per tenant via scheduled cleanup tasks.
 
 ### Integrations
-Each chat thread records the related alert or ticket identifiers. Webhooks or Kafka events propagate new messages to the SIEM, SOAR, and ITSM systems so that transcripts appear in case timelines automatically.
+Each chat thread records the related alert or ticket identifiers. Dedicated API endpoints allow incidents to spawn chat threads which are automatically linked to their alert/incident IDs. When a message is posted the transcript is forwarded to the ITSM ticket timeline (see `update_ticket_timeline`).
 
 ### Deployment & Scaling
 The service runs in its own container within the Kubernetes cluster. Redis Cluster is required for the Channels layer, and the app can scale out across pods without sticky sessions. TLS termination is handled at the ingress layer, with end-to-end encryption enforced.
