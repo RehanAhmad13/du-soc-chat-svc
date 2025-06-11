@@ -1,14 +1,14 @@
 from django.core.files.storage import FileSystemStorage
 from django.core.files.base import ContentFile
-from .encryption import get_fernet
+from .encryption import encrypt_bytes, decrypt_bytes
 
 
 class EncryptedFileSystemStorage(FileSystemStorage):
-    """File storage that transparently encrypts files using Fernet."""
+    """File storage that transparently encrypts files using AES-256."""
 
     def _save(self, name, content):
         data = content.read()
-        encrypted = get_fernet().encrypt(data)
+        encrypted = encrypt_bytes(data)
         content = ContentFile(encrypted)
         return super()._save(name, content)
 
@@ -16,5 +16,5 @@ class EncryptedFileSystemStorage(FileSystemStorage):
         file = super().open(name, mode)
         data = file.read()
         file.close()
-        decrypted = get_fernet().decrypt(data)
+        decrypted = decrypt_bytes(data)
         return ContentFile(decrypted, name)

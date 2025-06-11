@@ -145,7 +145,9 @@ class MessageViewSet(viewsets.ModelViewSet):
         """Search messages by content for the current tenant."""
         q = request.query_params.get("q", "")
         tenant_id = request.user.tenant_id
-        msgs = self.queryset.filter(thread__tenant_id=tenant_id, content__icontains=q)
+        msgs = self.queryset.filter(thread__tenant_id=tenant_id)
+        if q:
+            msgs = [m for m in msgs if q.lower() in m.content.lower()]
         serializer = self.get_serializer(msgs, many=True)
         return Response(serializer.data)
 

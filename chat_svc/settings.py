@@ -107,8 +107,9 @@ CHANNEL_LAYERS = {
 }
 
 # Encryption settings
-from cryptography.fernet import Fernet
-FILE_ENCRYPTION_KEY = os.environ.get('FILE_ENCRYPTION_KEY') or Fernet.generate_key().decode()
+import base64
+FILE_ENCRYPTION_KEY = os.environ.get('FILE_ENCRYPTION_KEY') or base64.urlsafe_b64encode(os.urandom(32)).decode()
+DB_ENCRYPTION_KEY = os.environ.get('DB_ENCRYPTION_KEY') or base64.urlsafe_b64encode(os.urandom(32)).decode()
 DEFAULT_FILE_STORAGE = 'chat_svc.chat.encrypted_storage.EncryptedFileSystemStorage'
 SECURE_SSL_REDIRECT = not DEBUG
 SESSION_COOKIE_SECURE = True

@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from .encrypted_storage import EncryptedFileSystemStorage
+from .encrypted_fields import EncryptedTextField
 
 
 class Tenant(models.Model):
@@ -38,7 +39,7 @@ class ChatThread(models.Model):
 class Message(models.Model):
     thread = models.ForeignKey(ChatThread, related_name='messages', on_delete=models.CASCADE)
     sender = models.ForeignKey(User, on_delete=models.CASCADE)
-    content = models.TextField(blank=True)
+    content = EncryptedTextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     previous_hash = models.CharField(max_length=64, blank=True)
     hash = models.CharField(max_length=64, blank=True)
@@ -83,7 +84,7 @@ class StructuredReply(models.Model):
     """Structured reply to a question template tied to a message."""
     message = models.OneToOneField(Message, on_delete=models.CASCADE, related_name='structured')
     template = models.ForeignKey(QuestionTemplate, on_delete=models.CASCADE)
-    answer = models.TextField()
+    answer = EncryptedTextField()
 
 
 class ReadReceipt(models.Model):

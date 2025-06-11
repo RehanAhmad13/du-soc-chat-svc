@@ -57,3 +57,6 @@ To obtain a JWT for API or WebSocket access, POST to `/api/chat/token/` with `us
 Dependencies are listed in `requirements.txt`.
 The Channels layer connects to Redis via the `REDIS_URL` environment variable.
 If unset, it defaults to `redis://localhost:6379/0`.
+Both file and database encryption use AES-256 keys configured via the
+`FILE_ENCRYPTION_KEY` and `DB_ENCRYPTION_KEY` environment variables. If not
+provided, random keys are generated at startup.
