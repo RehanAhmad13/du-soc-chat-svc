@@ -52,6 +52,17 @@ class QuestionTemplate(models.Model):
     tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE)
     text = models.CharField(max_length=500)
 
+    def render(self, context: dict) -> str:
+        """Substitute placeholders in the template using the given context."""
+        import string
+
+        formatter = string.Formatter()
+        try:
+            return formatter.vformat(self.text, (), context)
+        except KeyError as exc:
+            missing = exc.args[0]
+            raise ValueError(f"Missing placeholder '{missing}' in context") from exc
+
     def __str__(self):
         return self.text
 

@@ -17,6 +17,7 @@ from .views import (
     QuestionTemplateViewSet,
     AttachmentViewSet,
 )
+from .serializers import MessageSerializer
 
 User = get_user_model()
 
@@ -66,14 +67,14 @@ class SimpleModelTest(TestCase):
 
         thread = ChatThread.objects.create(tenant=tenant, incident_id='INC-4')
         msg_view = MessageViewSet.as_view({'post': 'create'})
-        data = {'thread': thread.id, 'content': '', 'template': template_id, 'answer': 'device123'}
+        data = {'thread': thread.id, 'content': '', 'template': template_id, 'answer': '{"device":"device123"}'}
         request = factory.post('/fake', data)
         request.user = user
         response = msg_view(request)
         self.assertEqual(response.status_code, 201)
         msg = Message.objects.get(id=response.data['id'])
         self.assertEqual(msg.structured.template.id, template_id)
-        self.assertEqual(msg.structured.answer, 'device123')
+        self.assertEqual(msg.structured.answer, '{"device":"device123"}')
 
     def test_attachment_upload(self):
         tenant = Tenant.objects.create(name='Acme')
@@ -122,3 +123,39 @@ class SimpleModelTest(TestCase):
         m1 = Message.objects.create(thread=thread, sender=user, content='first')
         m2 = Message.objects.create(thread=thread, sender=user, content='second')
         self.assertEqual(m2.previous_hash, m1.hash)
+
+    def test_placeholder_substitution_on_thread_creation(self):
+        tenant = Tenant.objects.create(name='Acme')
+        user = User.objects.create(username='alice', tenant=tenant)
+        QuestionTemplate.objects.create(tenant=tenant, text='Device {device_id}')
+        view = ChatThreadViewSet.as_view({'post': 'from_incident'})
+        factory = APIRequestFactory()
+        request = factory.post('/fake', {'metadata': {'device_id': 'abc'}}, format='json')
+        request.user = user
+        response = view(request, incident_id='INC-9')
+        self.assertEqual(response.status_code, 201)
+        thread = ChatThread.objects.get(id=response.data['id'])
+        self.assertEqual(thread.messages.first().content, 'Device abc')
+
+    def test_structured_reply_json_validation(self):
+        tenant = Tenant.objects.create(name='Acme')
+        user = User.objects.create(username='alice', tenant=tenant)
+        template = QuestionTemplate.objects.create(tenant=tenant, text='Info')
+        thread = ChatThread.objects.create(tenant=tenant, incident_id='INC-10')
+        data = {'thread': thread.id, 'template': template.id, 'answer': '{"a":1}'}
+        serializer = MessageSerializer(data=data)
+        self.assertTrue(serializer.is_valid())
+
+        bad = {'thread': thread.id, 'template': template.id, 'answer': 'oops'}
+        serializer = MessageSerializer(data=bad)
+        self.assertFalse(serializer.is_valid())
+
+    def test_question_template_validation(self):
+        tenant = Tenant.objects.create(name='Acme')
+        user = User.objects.create(username='alice', tenant=tenant)
+        view = QuestionTemplateViewSet.as_view({'post': 'create'})
+        factory = APIRequestFactory()
+        request = factory.post('/fake', {'text': 'Bad {device id}'})
+        request.user = user
+        response = view(request)
+        self.assertEqual(response.status_code, 400)
