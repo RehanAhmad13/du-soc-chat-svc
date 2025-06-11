@@ -20,6 +20,7 @@ from .views import (
     AttachmentViewSet,
     AdminThreadViewSet,
 )
+from .jwt_utils import create_token
 from .serializers import MessageSerializer
 
 User = get_user_model()
@@ -39,8 +40,8 @@ class SimpleModelTest(TestCase):
         user = User.objects.create(username='alice', tenant=tenant)
         view = ChatThreadViewSet.as_view({'post': 'from_incident'})
         factory = APIRequestFactory()
-        request = factory.post('/fake')
-        request.user = user
+        token = create_token(user)
+        request = factory.post('/fake', HTTP_AUTHORIZATION=f'Bearer {token}')
         response = view(request, incident_id='INC-2')
         self.assertEqual(response.status_code, 201)
         self.assertEqual(ChatThread.objects.filter(incident_id='INC-2').count(), 1)
@@ -62,8 +63,8 @@ class SimpleModelTest(TestCase):
         user = User.objects.create(username='alice', tenant=tenant)
         template_view = QuestionTemplateViewSet.as_view({'post': 'create'})
         factory = APIRequestFactory()
-        request = factory.post('/fake', {'text': 'Device ID?'})
-        request.user = user
+        token = create_token(user)
+        request = factory.post('/fake', {'text': 'Device ID?'}, HTTP_AUTHORIZATION=f'Bearer {token}')
         response = template_view(request)
         self.assertEqual(response.status_code, 201)
         template_id = response.data['id']
@@ -71,8 +72,7 @@ class SimpleModelTest(TestCase):
         thread = ChatThread.objects.create(tenant=tenant, incident_id='INC-4')
         msg_view = MessageViewSet.as_view({'post': 'create'})
         data = {'thread': thread.id, 'content': '', 'template': template_id, 'answer': '{"device":"device123"}'}
-        request = factory.post('/fake', data)
-        request.user = user
+        request = factory.post('/fake', data, HTTP_AUTHORIZATION=f'Bearer {token}')
         response = msg_view(request)
         self.assertEqual(response.status_code, 201)
         msg = Message.objects.get(id=response.data['id'])
@@ -87,8 +87,8 @@ class SimpleModelTest(TestCase):
         view = AttachmentViewSet.as_view({'post': 'create'})
         factory = APIRequestFactory()
         file = SimpleUploadedFile('log.txt', b'data')
-        request = factory.post('/fake', {'message': msg.id, 'file': file}, format='multipart')
-        request.user = user
+        token = create_token(user)
+        request = factory.post('/fake', {'message': msg.id, 'file': file}, format='multipart', HTTP_AUTHORIZATION=f'Bearer {token}')
         response = view(request)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(msg.attachments.count(), 1)
@@ -102,8 +102,8 @@ class SimpleModelTest(TestCase):
         Message.objects.create(thread=thread, sender=user, content='hello world')
         view = MessageViewSet.as_view({'get': 'search'})
         factory = APIRequestFactory()
-        request = factory.get('/fake', {'q': 'hello'})
-        request.user = user
+        token = create_token(user)
+        request = factory.get('/fake', {'q': 'hello'}, HTTP_AUTHORIZATION=f'Bearer {token}')
         response = view(request)
         self.assertEqual(len(response.data), 1)
 
@@ -114,8 +114,8 @@ class SimpleModelTest(TestCase):
         Message.objects.create(thread=thread, sender=user, content='hi')
         view = ChatThreadViewSet.as_view({'get': 'export'})
         factory = APIRequestFactory()
-        request = factory.get('/fake')
-        request.user = user
+        token = create_token(user)
+        request = factory.get('/fake', HTTP_AUTHORIZATION=f'Bearer {token}')
         response = view(request, pk=thread.id)
         self.assertEqual(len(response.data), 1)
 
@@ -133,8 +133,8 @@ class SimpleModelTest(TestCase):
         QuestionTemplate.objects.create(tenant=tenant, text='Device {device_id}')
         view = ChatThreadViewSet.as_view({'post': 'from_incident'})
         factory = APIRequestFactory()
-        request = factory.post('/fake', {'metadata': {'device_id': 'abc'}}, format='json')
-        request.user = user
+        token = create_token(user)
+        request = factory.post('/fake', {'metadata': {'device_id': 'abc'}}, format='json', HTTP_AUTHORIZATION=f'Bearer {token}')
         response = view(request, incident_id='INC-9')
         self.assertEqual(response.status_code, 201)
         thread = ChatThread.objects.get(id=response.data['id'])
@@ -158,8 +158,8 @@ class SimpleModelTest(TestCase):
         user = User.objects.create(username='alice', tenant=tenant)
         view = QuestionTemplateViewSet.as_view({'post': 'create'})
         factory = APIRequestFactory()
-        request = factory.post('/fake', {'text': 'Bad {device id}'})
-        request.user = user
+        token = create_token(user)
+        request = factory.post('/fake', {'text': 'Bad {device id}'}, HTTP_AUTHORIZATION=f'Bearer {token}')
         response = view(request)
         self.assertEqual(response.status_code, 400)
 
@@ -185,21 +185,18 @@ class SimpleModelTest(TestCase):
         factory = APIRequestFactory()
 
         # non-admin rejected
-        req = factory.get('/fake')
-        req.user = u2
+        req = factory.get('/fake', HTTP_AUTHORIZATION=f'Bearer {create_token(u2)}')
         resp = view(req)
         self.assertEqual(resp.status_code, 403)
 
         # filter by tenant
-        req = factory.get('/fake', {'tenant': t2.id})
-        req.user = admin
+        req = factory.get('/fake', {'tenant': t2.id}, HTTP_AUTHORIZATION=f'Bearer {create_token(admin)}')
         resp = view(req)
         self.assertEqual(len(resp.data), 1)
         self.assertEqual(resp.data[0]['id'], th2.id)
 
         # filter by incident
-        req = factory.get('/fake', {'incident': 'INC-A'})
-        req.user = admin
+        req = factory.get('/fake', {'incident': 'INC-A'}, HTTP_AUTHORIZATION=f'Bearer {create_token(admin)}')
         resp = view(req)
         self.assertEqual(len(resp.data), 1)
         self.assertEqual(resp.data[0]['id'], th1.id)
@@ -209,8 +206,7 @@ class SimpleModelTest(TestCase):
         from datetime import timedelta
         th1.created_at = timezone.now() - timedelta(hours=settings.INCIDENT_SLA_HOURS + 1)
         th1.save()
-        req = factory.get('/fake', {'sla': 'breached'})
-        req.user = admin
+        req = factory.get('/fake', {'sla': 'breached'}, HTTP_AUTHORIZATION=f'Bearer {create_token(admin)}')
         resp = view(req)
         self.assertEqual(len(resp.data), 1)
         self.assertEqual(resp.data[0]['id'], th1.id)
