@@ -3,6 +3,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
+from django.utils import timezone
+from datetime import timedelta
+from django.conf import settings
 from .models import (
     ChatThread,
     Message,
@@ -106,3 +109,35 @@ class AttachmentViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         tenant_id = self.request.user.tenant_id
         return self.queryset.filter(message__thread__tenant_id=tenant_id)
+
+
+class AdminThreadViewSet(viewsets.ReadOnlyModelViewSet):
+    """Admin view to inspect threads across tenants with SLA filtering."""
+
+    queryset = ChatThread.objects.all()
+    serializer_class = ChatThreadSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if not user.is_staff:
+            from rest_framework.exceptions import PermissionDenied
+
+            raise PermissionDenied()
+
+        qs = self.queryset
+        tenant = self.request.query_params.get("tenant")
+        incident = self.request.query_params.get("incident")
+        sla = self.request.query_params.get("sla")
+
+        if tenant:
+            qs = qs.filter(tenant_id=tenant)
+        if incident:
+            qs = qs.filter(incident_id=incident)
+        if sla in {"breached", "active"}:
+            threshold = timezone.now() - timedelta(hours=settings.INCIDENT_SLA_HOURS)
+            if sla == "breached":
+                qs = qs.filter(created_at__lt=threshold)
+            else:
+                qs = qs.filter(created_at__gte=threshold)
+        return qs

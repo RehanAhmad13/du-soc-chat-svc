@@ -67,8 +67,9 @@ class QuestionTemplateSerializer(serializers.ModelSerializer):
 
 class ChatThreadSerializer(serializers.ModelSerializer):
     messages = MessageSerializer(many=True, read_only=True)
+    sla_status = serializers.CharField(read_only=True)
 
     class Meta:
         model = ChatThread
-        fields = ['id', 'tenant', 'incident_id', 'created_at', 'messages']
+        fields = ['id', 'tenant', 'incident_id', 'created_at', 'messages', 'sla_status']
         read_only_fields = ['tenant', 'created_at']

@@ -23,6 +23,17 @@ class ChatThread(models.Model):
     incident_id = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    @property
+    def sla_status(self) -> str:
+        """Return 'breached' if the thread exceeds the SLA window."""
+        from django.conf import settings
+        from django.utils import timezone
+        from datetime import timedelta
+
+        hours = getattr(settings, "INCIDENT_SLA_HOURS", 24)
+        due = self.created_at + timedelta(hours=hours)
+        return "breached" if timezone.now() > due else "active"
+
 class Message(models.Model):
     thread = models.ForeignKey(ChatThread, related_name='messages', on_delete=models.CASCADE)
     sender = models.ForeignKey(User, on_delete=models.CASCADE)
