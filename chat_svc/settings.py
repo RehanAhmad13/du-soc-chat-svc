@@ -4,6 +4,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'dummy-secret-key')
+ITSM_API_URL = os.environ.get('ITSM_API_URL')
 DEBUG = True
 ALLOWED_HOSTS = ['*']
 

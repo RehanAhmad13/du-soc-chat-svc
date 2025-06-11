@@ -32,6 +32,7 @@ Messages are stored in an append-only model with creation timestamps and immutab
 
 ### Integrations
 Each chat thread records the related alert or ticket identifiers. Dedicated API endpoints allow incidents to spawn chat threads which are automatically linked to their alert/incident IDs. When a message is posted the transcript is forwarded to the ITSM ticket timeline (see `update_ticket_timeline`).
+The target ITSM endpoint is configured via the `ITSM_API_URL` environment variable.
 
 ### Deployment & Scaling
 The service runs in its own container within the Kubernetes cluster. Redis Cluster is required for the Channels layer, and the app can scale out across pods without sticky sessions. TLS termination is handled at the ingress layer, with end-to-end encryption enforced.
