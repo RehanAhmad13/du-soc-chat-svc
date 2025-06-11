@@ -23,9 +23,19 @@ class MessageSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({'answer': 'This field is required when template is provided.'})
         if answer is not None:
             try:
-                json.loads(answer)
+                data = json.loads(answer)
             except ValueError:
                 raise serializers.ValidationError({'answer': 'Must be valid JSON.'})
+
+            schema = getattr(template, 'schema', None) if template else None
+            if schema:
+                for field, spec in schema.items():
+                    if field not in data:
+                        raise serializers.ValidationError({'answer': f"Missing field '{field}'"})
+                    if spec.get('type') == 'dropdown':
+                        options = spec.get('options', [])
+                        if data[field] not in options:
+                            raise serializers.ValidationError({'answer': f"Invalid option for '{field}'"})
         return attrs
 
     def get_structured(self, obj):
@@ -60,9 +70,25 @@ class QuestionTemplateSerializer(serializers.ModelSerializer):
             if field_name and not re.match(r'^[A-Za-z_][A-Za-z0-9_]*$', field_name):
                 raise serializers.ValidationError(f"Invalid placeholder '{field_name}'")
         return value
+
+    def validate_schema(self, value):
+        if value is None:
+            return value
+        if not isinstance(value, dict):
+            raise serializers.ValidationError('Must be an object')
+        for name, spec in value.items():
+            if 'type' not in spec:
+                raise serializers.ValidationError(f"Field '{name}' missing type")
+            if spec['type'] not in {'text', 'dropdown'}:
+                raise serializers.ValidationError(f"Unsupported type '{spec['type']}'")
+            if spec['type'] == 'dropdown':
+                opts = spec.get('options')
+                if not isinstance(opts, list) or not opts:
+                    raise serializers.ValidationError(f"Field '{name}' dropdown requires options list")
+        return value
     class Meta:
         model = QuestionTemplate
-        fields = ['id', 'tenant', 'text']
+        fields = ['id', 'tenant', 'text', 'schema']
         read_only_fields = ['tenant']
 
 class ChatThreadSerializer(serializers.ModelSerializer):
