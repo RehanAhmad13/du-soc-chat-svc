@@ -42,3 +42,13 @@ The service runs in its own container within the Kubernetes cluster. Redis Clust
 - All WebSocket traffic upgraded via HTTPS (TLS 1.3)
 - Optional per-tenant data residency settings if required
 
+
+## Getting Started
+This repository contains a minimal Django project skeleton for the chat service.
+To run the unit tests:
+
+```bash
+python manage.py test
+```
+
+Dependencies are listed in `requirements.txt`.
