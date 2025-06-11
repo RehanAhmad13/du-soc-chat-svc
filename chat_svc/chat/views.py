@@ -22,7 +22,7 @@ from .serializers import (
     QuestionTemplateSerializer,
     AttachmentSerializer,
 )
-from . import integration
+from . import integration, event_bus
 class ObtainJWTView(APIView):
     permission_classes = []
     def post(self, request):
@@ -58,7 +58,16 @@ class ChatThreadViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         tenant_id = self.request.user.tenant_id
-        serializer.save(tenant_id=tenant_id)
+        thread = serializer.save(tenant_id=tenant_id)
+        event_bus.publish_event(
+            "chat-events",
+            {
+                "type": "thread_created",
+                "thread_id": thread.id,
+                "tenant_id": tenant_id,
+                "incident_id": thread.incident_id,
+            },
+        )
 
     @action(detail=False, methods=['post'], url_path='from-incident/(?P<incident_id>[^/.]+)')
     def from_incident(self, request, incident_id=None):
@@ -74,6 +83,15 @@ class ChatThreadViewSet(viewsets.ModelViewSet):
                 # Skip templates with missing placeholders
                 continue
             Message.objects.create(thread=thread, sender=request.user, content=content)
+        event_bus.publish_event(
+            "chat-events",
+            {
+                "type": "thread_created",
+                "thread_id": thread.id,
+                "tenant_id": tenant_id,
+                "incident_id": incident_id,
+            },
+        )
         serializer = self.get_serializer(thread)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -101,6 +119,16 @@ class MessageViewSet(viewsets.ModelViewSet):
         if template and answer is not None:
             StructuredReply.objects.create(message=msg, template=template, answer=answer)
         integration.update_ticket_timeline(msg.thread.incident_id, msg.content)
+        event_bus.publish_event(
+            "chat-events",
+            {
+                "type": "message_created",
+                "message_id": msg.id,
+                "thread_id": msg.thread_id,
+                "tenant_id": msg.thread.tenant_id,
+                "sender_id": msg.sender_id,
+            },
+        )
 
     @action(detail=False, methods=["get"], url_path="search")
     def search(self, request):
