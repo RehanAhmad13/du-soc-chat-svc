@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from .encrypted_storage import EncryptedFileSystemStorage
 
 
 class Tenant(models.Model):
@@ -99,15 +100,20 @@ class Attachment(models.Model):
     message = models.ForeignKey(
         Message, related_name="attachments", on_delete=models.CASCADE
     )
-    file = models.FileField(upload_to="attachments/")
+    file = models.FileField(
+        upload_to="attachments/",
+        storage=EncryptedFileSystemStorage(),
+    )
     checksum = models.CharField(max_length=64, editable=False, blank=True)
 
     def save(self, *args, **kwargs):
         if self.file and not self.checksum:
             import hashlib
+            from django.core.files.base import ContentFile
 
+            data = self.file.read()
             sha = hashlib.sha256()
-            for chunk in self.file.chunks():
-                sha.update(chunk)
+            sha.update(data)
             self.checksum = sha.hexdigest()
+            self.file = ContentFile(data, name=self.file.name)
         super().save(*args, **kwargs)
