@@ -25,7 +25,7 @@ The chat service is built as a standalone Django project using Django REST Frame
 - Typing indicators and read receipts are emitted as lightweight events to keep latency below 1 second.
 
 ### Template Management
-SOC administrators define question templates that capture structured fields (text, dropdowns, file uploads). When a chat is created from an incident, the template is applied and placeholders (e.g., `{device_id}`) are substituted with incident metadata.
+SOC administrators define question templates that capture structured fields (text, dropdowns, file uploads). Each template may include a JSON `schema` describing expected fields and dropdown options. Incoming structured replies are validated against this schema. When a chat is created from an incident, the template is applied and placeholders (e.g., `{device_id}`) are substituted with incident metadata.
 
 ### Message Storage & Audit
 Messages are stored in an append-only model with creation timestamps and immutable hashes. Files are stored in a secure object store with SHA-256 checksums recorded for audit trails. Retention policies are applied per tenant via scheduled cleanup tasks.

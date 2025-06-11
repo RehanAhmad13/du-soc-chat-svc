@@ -63,6 +63,7 @@ class QuestionTemplate(models.Model):
     """Reusable template for structured questions."""
     tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE)
     text = models.CharField(max_length=500)
+    schema = models.JSONField(blank=True, null=True, default=dict)
 
     def render(self, context: dict) -> str:
         """Substitute placeholders in the template using the given context."""

@@ -1,4 +1,5 @@
 from django.test import TestCase
+import json
 from django.contrib.auth import get_user_model
 from rest_framework.test import APIRequestFactory
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -162,6 +163,31 @@ class SimpleModelTest(TestCase):
         request = factory.post('/fake', {'text': 'Bad {device id}'}, HTTP_AUTHORIZATION=f'Bearer {token}')
         response = view(request)
         self.assertEqual(response.status_code, 400)
+
+    def test_template_schema_enforcement(self):
+        tenant = Tenant.objects.create(name='Acme')
+        user = User.objects.create(username='alice', tenant=tenant)
+        tmpl = QuestionTemplate.objects.create(
+            tenant=tenant,
+            text='Severity?',
+            schema={'level': {'type': 'dropdown', 'options': ['low', 'high']}}
+        )
+        thread = ChatThread.objects.create(tenant=tenant, incident_id='INC-11')
+        valid = {
+            'thread': thread.id,
+            'template': tmpl.id,
+            'answer': json.dumps({'level': 'low'})
+        }
+        serializer = MessageSerializer(data=valid)
+        self.assertTrue(serializer.is_valid())
+
+        invalid = {
+            'thread': thread.id,
+            'template': tmpl.id,
+            'answer': json.dumps({'level': 'wrong'})
+        }
+        serializer = MessageSerializer(data=invalid)
+        self.assertFalse(serializer.is_valid())
 
     @patch('chat_svc.chat.integration.requests.post')
     def test_update_ticket_timeline_posts(self, mock_post):
