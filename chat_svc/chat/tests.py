@@ -38,6 +38,18 @@ class SimpleModelTest(TestCase):
         self.assertEqual(msg.thread, thread)
         self.assertEqual(msg.sender, user)
 
+    def test_message_content_encrypted_at_rest(self):
+        tenant = Tenant.objects.create(name='Acme')
+        user = User.objects.create(username='alice', tenant=tenant)
+        thread = ChatThread.objects.create(tenant=tenant, incident_id='ENC-1')
+        msg = Message.objects.create(thread=thread, sender=user, content='secret')
+        from django.db import connection
+        with connection.cursor() as cur:
+            cur.execute("SELECT content FROM chat_message WHERE id=%s", [msg.id])
+            raw = cur.fetchone()[0]
+        self.assertTrue(raw.startswith('enc:'))
+        self.assertEqual(Message.objects.get(id=msg.id).content, 'secret')
+
     def test_create_thread_from_incident_action(self):
         tenant = Tenant.objects.create(name='Acme')
         user = User.objects.create(username='alice', tenant=tenant)
