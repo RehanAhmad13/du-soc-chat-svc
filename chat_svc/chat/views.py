@@ -1,4 +1,7 @@
 from rest_framework import viewsets, status
+from rest_framework.views import APIView
+from django.contrib.auth import authenticate
+from .jwt_utils import create_token
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -20,6 +23,15 @@ from .serializers import (
     AttachmentSerializer,
 )
 from . import integration
+class ObtainJWTView(APIView):
+    permission_classes = []
+    def post(self, request):
+        user = authenticate(username=request.data.get("username"), password=request.data.get("password"))
+        if not user:
+            return Response({"detail": "Invalid credentials"}, status=400)
+        token = create_token(user)
+        return Response({"token": token})
+
 
 
 class QuestionTemplateViewSet(viewsets.ModelViewSet):

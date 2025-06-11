@@ -2,6 +2,7 @@ from rest_framework.routers import DefaultRouter
 from django.urls import path, include
 from .views import (
     ChatThreadViewSet,
+    ObtainJWTView,
     MessageViewSet,
     QuestionTemplateViewSet,
     AttachmentViewSet,
@@ -19,5 +20,6 @@ admin_router.register('threads', AdminThreadViewSet, basename='admin-thread')
 
 urlpatterns = [
     *router.urls,
+    path('token/', ObtainJWTView.as_view(), name='token'),
     path('admin/', include(admin_router.urls)),
 ]

@@ -52,5 +52,6 @@ To run the unit tests:
 ```bash
 python manage.py test
 ```
+To obtain a JWT for API or WebSocket access, POST to `/api/chat/token/` with `username` and `password`. Include the token in the `Authorization` header (`Bearer <token>`) for API calls or as the `token` query parameter for WebSocket connections.
 
 Dependencies are listed in `requirements.txt`.

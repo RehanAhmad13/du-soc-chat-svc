@@ -86,6 +86,8 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+REST_FRAMEWORK = {"DEFAULT_AUTHENTICATION_CLASSES": ["chat_svc.chat.authentication.JWTAuthentication"]}
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
