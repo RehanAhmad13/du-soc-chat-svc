@@ -15,9 +15,13 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework.authtoken',
     'channels',
     'chat_svc.chat',
 ]
+
+# Custom user model with tenant awareness
+AUTH_USER_MODEL = 'chat.User'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

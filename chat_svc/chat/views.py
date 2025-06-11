@@ -4,7 +4,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import ChatThread, Message, QuestionTemplate, StructuredReply
 from .serializers import ChatThreadSerializer, MessageSerializer, QuestionTemplateSerializer
-from .integration import update_ticket_timeline
+from . import integration
 
 
 class QuestionTemplateViewSet(viewsets.ModelViewSet):
@@ -56,4 +56,4 @@ class MessageViewSet(viewsets.ModelViewSet):
         msg = serializer.save(sender=self.request.user)
         if template and answer is not None:
             StructuredReply.objects.create(message=msg, template=template, answer=answer)
-        update_ticket_timeline(msg.thread.incident_id, msg.content)
+        integration.update_ticket_timeline(msg.thread.incident_id, msg.content)

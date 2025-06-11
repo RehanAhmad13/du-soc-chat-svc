@@ -10,7 +10,7 @@ User = get_user_model()
 class SimpleModelTest(TestCase):
     def test_create_thread_and_message(self):
         tenant = Tenant.objects.create(name='Acme')
-        user = User.objects.create(username='alice')
+        user = User.objects.create(username='alice', tenant=tenant)
         thread = ChatThread.objects.create(tenant=tenant, incident_id='INC-1')
         msg = Message.objects.create(thread=thread, sender=user, content='hi')
         self.assertEqual(Message.objects.count(), 1)
@@ -19,7 +19,7 @@ class SimpleModelTest(TestCase):
 
     def test_create_thread_from_incident_action(self):
         tenant = Tenant.objects.create(name='Acme')
-        user = User.objects.create(username='alice', tenant_id=tenant.id)
+        user = User.objects.create(username='alice', tenant=tenant)
         view = ChatThreadViewSet.as_view({'post': 'from_incident'})
         factory = APIRequestFactory()
         request = factory.post('/fake')
@@ -31,7 +31,7 @@ class SimpleModelTest(TestCase):
     @patch('chat_svc.chat.integration.update_ticket_timeline')
     def test_message_triggers_ticket_update(self, mock_update):
         tenant = Tenant.objects.create(name='Acme')
-        user = User.objects.create(username='alice')
+        user = User.objects.create(username='alice', tenant=tenant)
         thread = ChatThread.objects.create(tenant=tenant, incident_id='INC-3')
         serializer = MessageViewSet.serializer_class(data={'thread': thread.id, 'content': 'hi'})
         serializer.is_valid()
@@ -42,7 +42,7 @@ class SimpleModelTest(TestCase):
 
     def test_question_template_and_structured_reply(self):
         tenant = Tenant.objects.create(name='Acme')
-        user = User.objects.create(username='alice', tenant_id=tenant.id)
+        user = User.objects.create(username='alice', tenant=tenant)
         template_view = QuestionTemplateViewSet.as_view({'post': 'create'})
         factory = APIRequestFactory()
         request = factory.post('/fake', {'text': 'Device ID?'})
