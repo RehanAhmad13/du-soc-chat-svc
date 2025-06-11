@@ -120,6 +120,22 @@ class SimpleModelTest(TestCase):
         response = view(request, pk=thread.id)
         self.assertEqual(len(response.data), 1)
 
+    def test_export_returns_json_without_hashes(self):
+        tenant = Tenant.objects.create(name='Acme')
+        user = User.objects.create(username='alice', tenant=tenant)
+        thread = ChatThread.objects.create(tenant=tenant, incident_id='INC-7b')
+        Message.objects.create(thread=thread, sender=user, content='hi')
+        view = ChatThreadViewSet.as_view({'get': 'export'})
+        factory = APIRequestFactory()
+        token = create_token(user)
+        request = factory.get('/fake', HTTP_AUTHORIZATION=f'Bearer {token}')
+        response = view(request, pk=thread.id)
+        response.render()
+        self.assertEqual(response["Content-Type"], "application/json")
+        self.assertIn('content', response.data[0])
+        self.assertNotIn('hash', response.data[0])
+        self.assertNotIn('previous_hash', response.data[0])
+
     def test_message_hash_chain(self):
         tenant = Tenant.objects.create(name='Acme')
         user = User.objects.create(username='alice', tenant=tenant)
