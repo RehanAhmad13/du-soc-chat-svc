@@ -11,8 +11,15 @@ def update_ticket_timeline(incident_id: str, message: str) -> None:
         logger.info("No ITSM_API_URL configured; skipping update for %s", incident_id)
         return
     url = f"{url_base.rstrip('/')}/incidents/{incident_id}/timeline"
+    headers = {}
+    token = getattr(settings, "ITSM_API_TOKEN", None)
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+
     try:
-        resp = requests.post(url, json={"message": message}, timeout=5)
+        resp = requests.post(
+            url, json={"message": message}, headers=headers or None, timeout=5
+        )
         resp.raise_for_status()
     except Exception:
         logger.exception("Failed to update ticket %s", incident_id)

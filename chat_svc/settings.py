@@ -5,6 +5,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'dummy-secret-key')
 ITSM_API_URL = os.environ.get('ITSM_API_URL')
+ITSM_API_TOKEN = os.environ.get('ITSM_API_TOKEN')
 INCIDENT_SLA_HOURS = int(os.environ.get('INCIDENT_SLA_HOURS', '24'))
 DEBUG = True
 ALLOWED_HOSTS = ['*']
