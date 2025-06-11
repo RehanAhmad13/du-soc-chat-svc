@@ -1,9 +1,22 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from rest_framework.test import APIRequestFactory
+from django.core.files.uploadedfile import SimpleUploadedFile
 from unittest.mock import patch
-from .models import Tenant, ChatThread, Message, QuestionTemplate, StructuredReply
-from .views import MessageViewSet, ChatThreadViewSet, QuestionTemplateViewSet
+from .models import (
+    Tenant,
+    ChatThread,
+    Message,
+    QuestionTemplate,
+    StructuredReply,
+    Attachment,
+)
+from .views import (
+    MessageViewSet,
+    ChatThreadViewSet,
+    QuestionTemplateViewSet,
+    AttachmentViewSet,
+)
 
 User = get_user_model()
 
@@ -61,3 +74,51 @@ class SimpleModelTest(TestCase):
         msg = Message.objects.get(id=response.data['id'])
         self.assertEqual(msg.structured.template.id, template_id)
         self.assertEqual(msg.structured.answer, 'device123')
+
+    def test_attachment_upload(self):
+        tenant = Tenant.objects.create(name='Acme')
+        user = User.objects.create(username='alice', tenant=tenant)
+        thread = ChatThread.objects.create(tenant=tenant, incident_id='INC-5')
+        msg = Message.objects.create(thread=thread, sender=user, content='log')
+        view = AttachmentViewSet.as_view({'post': 'create'})
+        factory = APIRequestFactory()
+        file = SimpleUploadedFile('log.txt', b'data')
+        request = factory.post('/fake', {'message': msg.id, 'file': file}, format='multipart')
+        request.user = user
+        response = view(request)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(msg.attachments.count(), 1)
+        att = msg.attachments.first()
+        self.assertTrue(att.checksum)
+
+    def test_search_messages(self):
+        tenant = Tenant.objects.create(name='Acme')
+        user = User.objects.create(username='alice', tenant=tenant)
+        thread = ChatThread.objects.create(tenant=tenant, incident_id='INC-6')
+        Message.objects.create(thread=thread, sender=user, content='hello world')
+        view = MessageViewSet.as_view({'get': 'search'})
+        factory = APIRequestFactory()
+        request = factory.get('/fake', {'q': 'hello'})
+        request.user = user
+        response = view(request)
+        self.assertEqual(len(response.data), 1)
+
+    def test_export_thread(self):
+        tenant = Tenant.objects.create(name='Acme')
+        user = User.objects.create(username='alice', tenant=tenant)
+        thread = ChatThread.objects.create(tenant=tenant, incident_id='INC-7')
+        Message.objects.create(thread=thread, sender=user, content='hi')
+        view = ChatThreadViewSet.as_view({'get': 'export'})
+        factory = APIRequestFactory()
+        request = factory.get('/fake')
+        request.user = user
+        response = view(request, pk=thread.id)
+        self.assertEqual(len(response.data), 1)
+
+    def test_message_hash_chain(self):
+        tenant = Tenant.objects.create(name='Acme')
+        user = User.objects.create(username='alice', tenant=tenant)
+        thread = ChatThread.objects.create(tenant=tenant, incident_id='INC-8')
+        m1 = Message.objects.create(thread=thread, sender=user, content='first')
+        m2 = Message.objects.create(thread=thread, sender=user, content='second')
+        self.assertEqual(m2.previous_hash, m1.hash)
