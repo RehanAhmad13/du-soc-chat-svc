@@ -196,6 +196,18 @@ class SimpleModelTest(TestCase):
         mock_post.assert_called_with(
             'http://itsm/api/incidents/INC-99/timeline',
             json={'message': 'hello'},
+            headers=None,
+            timeout=5
+        )
+
+    @patch('chat_svc.chat.integration.requests.post')
+    def test_update_ticket_timeline_with_token(self, mock_post):
+        with self.settings(ITSM_API_URL='http://itsm/api', ITSM_API_TOKEN='tok'):
+            integration.update_ticket_timeline('INC-100', 'hi')
+        mock_post.assert_called_with(
+            'http://itsm/api/incidents/INC-100/timeline',
+            json={'message': 'hi'},
+            headers={'Authorization': 'Bearer tok'},
             timeout=5
         )
 
