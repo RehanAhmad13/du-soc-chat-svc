@@ -79,3 +79,19 @@ The frontend uses Vite environment variables to locate the backend APIs and WebS
 cp frontend/.env.example frontend/.env
 ```
 Modify `VITE_API_BASE` and `VITE_WS_BASE` as needed for your deployment.
+
+## Build & Deployment
+
+To create a production bundle of the React app and collect static files run:
+
+```bash
+npm run build --prefix frontend
+python manage.py collectstatic --noinput
+```
+
+A sample Dockerfile is included for container builds:
+
+```bash
+docker build -t du-soc-chat-svc .
+docker run -p 8000:8000 du-soc-chat-svc
+```
