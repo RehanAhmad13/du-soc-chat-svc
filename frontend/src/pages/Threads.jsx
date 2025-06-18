@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getThreads } from '../api'
+import { useAuth } from '../AuthContext'
 
 export default function Threads() {
   const [threads, setThreads] = useState([])
   const [error, setError] = useState('')
   const navigate = useNavigate()
-  const token = localStorage.getItem('token')
+  const { token } = useAuth()
 
   useEffect(() => {
     if (!token) {

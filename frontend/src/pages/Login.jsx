@@ -1,18 +1,20 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { login } from '../api'
+import { useAuth } from '../AuthContext'
 
 export default function Login() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const navigate = useNavigate()
+  const { login: setToken } = useAuth()
 
   async function handleSubmit(e) {
     e.preventDefault()
     try {
       const token = await login(username, password)
-      localStorage.setItem('token', token)
+      setToken(token)
       navigate('/threads')
     } catch (err) {
       console.error(err)
