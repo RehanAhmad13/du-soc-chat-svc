@@ -4,6 +4,7 @@ import { getThreads } from '../api'
 
 export default function Threads() {
   const [threads, setThreads] = useState([])
+  const [error, setError] = useState('')
   const navigate = useNavigate()
   const token = localStorage.getItem('token')
 
@@ -12,12 +13,15 @@ export default function Threads() {
       navigate('/login')
       return
     }
-    getThreads(token).then(setThreads).catch(() => setThreads([]))
+    getThreads(token)
+      .then(setThreads)
+      .catch(() => setError('Failed to load threads'))
   }, [token, navigate])
 
   return (
     <div>
       <h2>Chat Threads</h2>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
       <ul>
         {threads.map(t => (
           <li key={t.id}>

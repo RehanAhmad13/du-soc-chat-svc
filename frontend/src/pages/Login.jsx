@@ -15,6 +15,7 @@ export default function Login() {
       localStorage.setItem('token', token)
       navigate('/threads')
     } catch (err) {
+      console.error(err)
       setError('Invalid credentials')
     }
   }
