@@ -62,3 +62,13 @@ If unset, it defaults to `redis://localhost:6379/0`.
 Both file and database encryption use AES-256 keys configured via the
 `FILE_ENCRYPTION_KEY` and `DB_ENCRYPTION_KEY` environment variables. If not
 provided, random keys are generated at startup.
+
+## Frontend
+A React application powered by [Vite](https://vitejs.dev/) lives in the `frontend/` directory. It demonstrates basic routing and local state management for a chat interface.
+
+```bash
+cd frontend
+npm install        # install dependencies
+npm run dev        # start the development server
+npm run build      # build for production
+```
