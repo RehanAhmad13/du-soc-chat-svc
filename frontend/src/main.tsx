@@ -5,7 +5,7 @@ import { AuthProvider } from './AuthContext'
 import './index.css'
 import App from './App'
 
-createRoot(document.getElementById('root')).render(
+createRoot(document.getElementById('root') as HTMLElement).render(
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>
