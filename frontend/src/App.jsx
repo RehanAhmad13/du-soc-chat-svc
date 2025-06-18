@@ -4,6 +4,7 @@ import Home from './pages/Home'
 import Chat from './pages/Chat'
 import About from './pages/About'
 import Login from './pages/Login'
+import Register from './pages/Register'
 import Threads from './pages/Threads'
 
 export default function App() {
@@ -14,6 +15,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route path="/threads" element={<Threads />} />
           <Route path="/chat/:id" element={<Chat />} />
           <Route path="/about" element={<About />} />

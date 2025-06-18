@@ -11,6 +11,16 @@ export async function login(username, password) {
   return data.token
 }
 
+export async function registerUser(username, password, inviteCode) {
+  const res = await fetch(`${API_BASE}/register/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password, invite_code: inviteCode })
+  })
+  if (!res.ok) throw new Error('Registration failed')
+  return res.json()
+}
+
 export async function getThreads(token) {
   const res = await fetch(`${API_BASE}/threads/`, {
     headers: { Authorization: `Bearer ${token}` }
