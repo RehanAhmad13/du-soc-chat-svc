@@ -20,13 +20,13 @@ export default function Threads() {
   }, [token, navigate])
 
   return (
-    <div>
+    <div className="container mt-4">
       <h2>Chat Threads</h2>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      <ul>
+      {error && <p className="text-danger">{error}</p>}
+      <ul className="list-group" aria-live="polite">
         {threads.map(t => (
-          <li key={t.id}>
-            <Link to={`/chat/${t.id}`}>{t.incident_id}</Link>
+          <li key={t.id} className="list-group-item">
+            <Link className="text-decoration-none" to={`/chat/${t.id}`}>{t.incident_id}</Link>
           </li>
         ))}
       </ul>

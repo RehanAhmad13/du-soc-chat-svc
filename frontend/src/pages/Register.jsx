@@ -23,33 +23,39 @@ export default function Register() {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="container mt-4" aria-label="Registration form">
       <h2>Register</h2>
       {message && <p>{message}</p>}
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      <div>
+      {error && <p className="text-danger">{error}</p>}
+      <div className="mb-3">
         <input
+          className="form-control"
           placeholder="Username"
+          aria-label="Username"
           value={username}
           onChange={e => setUsername(e.target.value)}
         />
       </div>
-      <div>
+      <div className="mb-3">
         <input
           type="password"
+          className="form-control"
           placeholder="Password"
+          aria-label="Password"
           value={password}
           onChange={e => setPassword(e.target.value)}
         />
       </div>
-      <div>
+      <div className="mb-3">
         <input
+          className="form-control"
           placeholder="Invite Code"
+          aria-label="Invite Code"
           value={invite}
           onChange={e => setInvite(e.target.value)}
         />
       </div>
-      <button type="submit">Register</button>
+      <button type="submit" className="btn btn-primary">Register</button>
     </form>
   )
 }

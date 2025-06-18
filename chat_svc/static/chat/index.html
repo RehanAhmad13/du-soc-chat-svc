@@ -92,6 +92,7 @@ function ChatApp() {
             value={username}
             onChange={e => setUsername(e.target.value)}
             placeholder="Username"
+            aria-label="Username"
           />
         </div>
         <div className="mb-3">
@@ -101,9 +102,10 @@ function ChatApp() {
             value={password}
             onChange={e => setPassword(e.target.value)}
             placeholder="Password"
+            aria-label="Password"
           />
         </div>
-        <button className="btn btn-primary" onClick={login}>Login</button>
+        <button className="btn btn-primary" onClick={login} aria-label="Login">Login</button>
       </div>
     );
   }
@@ -135,7 +137,7 @@ function ChatApp() {
       <div id="instructions" className="text-muted mb-2">
         Please answer any structured prompts in JSON first, then chat freely.
       </div>
-      <div id="messages" className="border rounded p-3 mb-3">
+      <div id="messages" className="border rounded p-3 mb-3" aria-live="polite">
         {messages.map((m, i) => (
           <div key={i}>
             <span className="sender">{m.sender}:</span> {m.content}
@@ -148,8 +150,9 @@ function ChatApp() {
           value={newMessage}
           onChange={e => setNewMessage(e.target.value)}
           placeholder="Type your message..."
+          aria-label="Message text"
         ></textarea>
-        <button className="btn btn-primary" onClick={sendMessage}>Send</button>
+        <button className="btn btn-primary" onClick={sendMessage} aria-label="Send message">Send</button>
       </div>
     </div>
   );
