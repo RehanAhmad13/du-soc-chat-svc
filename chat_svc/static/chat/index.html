@@ -2,13 +2,17 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DU SOC Chat</title>
+<link
+  href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+  rel="stylesheet"
+  integrity="sha384-9ndCyUaPlFvJkP0gS3X3UJ46jBY6hU50PsvcmYj8Aqa8rZE+gyExQJZ9W5yXKbi6"
+  crossorigin="anonymous"
+/>
 <style>
-body { font-family: Arial, sans-serif; margin: 1em; }
-#messages { border: 1px solid #ccc; padding: 1em; height: 300px; overflow-y: scroll; }
+#messages { height: 40vh; overflow-y: auto; }
 .sender { font-weight: bold; }
-#inputArea { margin-top: 1em; }
-textarea { width: 100%; height: 4em; }
 li { cursor: pointer; }
 </style>
 <script src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
@@ -81,22 +85,43 @@ function ChatApp() {
 
   if (!token) {
     return (
-      <div id="login">
-        <input value={username} onChange={e => setUsername(e.target.value)} placeholder="Username" />
-        <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" />
-        <button onClick={login}>Login</button>
+      <div className="container py-5">
+        <div className="mb-3">
+          <input
+            className="form-control"
+            value={username}
+            onChange={e => setUsername(e.target.value)}
+            placeholder="Username"
+          />
+        </div>
+        <div className="mb-3">
+          <input
+            type="password"
+            className="form-control"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            placeholder="Password"
+          />
+        </div>
+        <button className="btn btn-primary" onClick={login}>Login</button>
       </div>
     );
   }
 
   if (!currentThread) {
     return (
-      <div>
-        <h1>DU SOC Chat</h1>
-        <h2>Threads</h2>
-        <ul>
+      <div className="container py-5">
+        <h1 className="mb-4">DU SOC Chat</h1>
+        <h2 className="h5">Threads</h2>
+        <ul className="list-group">
           {threads.map(t => (
-            <li key={t.id} onClick={() => openThread(t)}>{t.incident_id} (ID {t.id})</li>
+            <li
+              key={t.id}
+              className="list-group-item list-group-item-action"
+              onClick={() => openThread(t)}
+            >
+              {t.incident_id} (ID {t.id})
+            </li>
           ))}
         </ul>
       </div>
@@ -104,18 +129,27 @@ function ChatApp() {
   }
 
   return (
-    <div>
-      <h1>DU SOC Chat</h1>
-      <h2>Incident {currentThread.incident_id}</h2>
-      <div id="instructions" style={{ color: '#555' }}>Please answer any structured prompts in JSON first, then chat freely.</div>
-      <div id="messages">
+    <div className="container py-5">
+      <h1 className="mb-4">DU SOC Chat</h1>
+      <h2 className="h5 mb-3">Incident {currentThread.incident_id}</h2>
+      <div id="instructions" className="text-muted mb-2">
+        Please answer any structured prompts in JSON first, then chat freely.
+      </div>
+      <div id="messages" className="border rounded p-3 mb-3">
         {messages.map((m, i) => (
-          <div key={i}><span className="sender">{m.sender}:</span> {m.content}</div>
+          <div key={i}>
+            <span className="sender">{m.sender}:</span> {m.content}
+          </div>
         ))}
       </div>
-      <div id="inputArea">
-        <textarea value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder="Type your message..."></textarea>
-        <button onClick={sendMessage}>Send</button>
+      <div id="inputArea" className="mb-3">
+        <textarea
+          className="form-control mb-2"
+          value={newMessage}
+          onChange={e => setNewMessage(e.target.value)}
+          placeholder="Type your message..."
+        ></textarea>
+        <button className="btn btn-primary" onClick={sendMessage}>Send</button>
       </div>
     </div>
   );
@@ -123,5 +157,10 @@ function ChatApp() {
 
 ReactDOM.render(<ChatApp />, document.getElementById('app'));
 </script>
+<script
+  src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+  integrity="sha384-Q2gyqgtD+2W2cUBUlwFh5sp/jV6elgC97gJnIFsl0cl3aG5i5C5bdbWQqWIrP3rV"
+  crossorigin="anonymous"
+></script>
 </body>
 </html>
