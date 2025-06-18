@@ -381,3 +381,35 @@ class PresenceTest(TransactionTestCase):
 
         async_to_sync(scenario)()
 
+
+class WebsocketPushTest(TransactionTestCase):
+    """Ensure websocket messages trigger push notifications."""
+
+    @override_settings(
+        CHANNEL_LAYERS={"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
+    )
+    @patch('chat_svc.chat.push.send_push')
+    def test_push_on_ws_message(self, mock_push):
+        tenant = Tenant.objects.create(name='Acme')
+        alice = User.objects.create(username='alice', tenant=tenant)
+        bob = User.objects.create(username='bob', tenant=tenant)
+        Device.objects.create(user=bob, token='tok999')
+        thread = ChatThread.objects.create(tenant=tenant, incident_id='INC-WS')
+
+        async def scenario():
+            com = WebsocketCommunicator(application, f"/ws/chat/{thread.id}/?token={create_token(alice)}")
+            connected, _ = await com.connect()
+            assert connected
+
+            await com.receive_json_from()  # initial presence
+
+            await com.send_json_to({"type": "message", "content": "hello"})
+            evt = await com.receive_json_from()
+            while evt.get("type") != "message":
+                evt = await com.receive_json_from()
+
+            await com.disconnect()
+
+        async_to_sync(scenario)()
+        mock_push.assert_called()
+

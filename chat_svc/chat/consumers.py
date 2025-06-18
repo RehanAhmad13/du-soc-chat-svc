@@ -2,9 +2,10 @@ import json
 import logging
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
+from asgiref.sync import sync_to_async
 from django.contrib.auth.models import AnonymousUser
-from .models import ChatThread, Message, ReadReceipt
-from . import event_bus
+from .models import ChatThread, Message, ReadReceipt, Device
+from . import event_bus, push
 
 # Track simple in-memory presence per thread. This is not persisted and is
 # mainly for demo/testing purposes. In a real deployment you would use Redis or
@@ -99,6 +100,21 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         "sender_id": user.id,
                     },
                 )
+
+                # Push notification to other tenant users
+                tokens = await database_sync_to_async(
+                    lambda: list(
+                        Device.objects.filter(
+                            user__tenant_id=self.thread.tenant_id
+                        )
+                        .exclude(user=user)
+                        .values_list("token", flat=True)
+                    )
+                )()
+                if tokens:
+                    await sync_to_async(push.send_push)(
+                        tokens, "New message", msg.content
+                    )
 
                 # Send to group
                 await self.channel_layer.group_send(
