@@ -30,10 +30,7 @@ class MessageSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         initial_data = getattr(self, 'initial_data', {})
 
-        # Hide template field from DRF browsable UI during POST
         if request and request.method == "POST":
-            self.fields.pop('template', None)
-
             # Attempt to get thread
             thread = None
             thread_id = initial_data.get('thread')

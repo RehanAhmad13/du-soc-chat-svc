@@ -6,10 +6,16 @@ from .encrypted_fields import EncryptedTextField
 
 class Tenant(models.Model):
     name = models.CharField(max_length=255)
-    invite_code = models.CharField(max_length=64, unique=True)
+    invite_code = models.CharField(max_length=64, unique=True, default='', blank=True)
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.invite_code:
+            import secrets
+            self.invite_code = secrets.token_hex(8)
+        super().save(*args, **kwargs)
 
 
 class User(AbstractUser):
@@ -25,6 +31,7 @@ class User(AbstractUser):
 
 class QuestionTemplate(models.Model):
     """Reusable global template for structured questions."""
+    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, null=True)
     text = models.CharField(max_length=500)
     schema = models.JSONField(blank=True, null=True, default=dict)
 

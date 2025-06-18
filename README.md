@@ -10,6 +10,7 @@ Built with Django REST Framework and Django Channels, the service ensures tenant
 - Linked to alerts, incidents, and ITSM tickets
 - Tamper-evident logs and exportable transcripts
 - Mobile-ready (React Native parity)
+- Browser-based interface built with React for richer interaction
 
 ## Architecture Overview
 The chat service is built as a standalone Django project using Django REST Framework for APIs and Django Channels for WebSocket support. Each tenant operates within an isolated schema or database, ensuring strict segregation of data. Redis serves as the channel layer backend for real-time message fan-out and presence tracking.
