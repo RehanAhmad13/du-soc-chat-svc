@@ -6,6 +6,11 @@ from django.contrib.auth.models import AnonymousUser
 from .models import ChatThread, Message, ReadReceipt
 from . import event_bus
 
+# Track simple in-memory presence per thread. This is not persisted and is
+# mainly for demo/testing purposes. In a real deployment you would use Redis or
+# another shared store to keep presence state across workers.
+_presence = {}
+
 logger = logging.getLogger(__name__)
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -33,10 +38,37 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
+
+        # Mark user as online in this thread
+        online = _presence.setdefault(self.thread_id, set())
+        if user.username not in online:
+            online.add(user.username)
+            await self.channel_layer.group_send(
+                self.group_name,
+                {
+                    "type": "chat.presence",
+                    "user": user.username,
+                    "online": True,
+                },
+            )
+
         logger.info(f"[WS] User {user} connected to thread {self.thread_id}")
 
     async def disconnect(self, close_code):
+        user = self.scope.get("user")
         await self.channel_layer.group_discard(self.group_name, self.channel_name)
+
+        online = _presence.get(self.thread_id, set())
+        if user and user.username in online:
+            online.discard(user.username)
+            await self.channel_layer.group_send(
+                self.group_name,
+                {
+                    "type": "chat.presence",
+                    "user": user.username,
+                    "online": False,
+                },
+            )
         logger.info(f"[WS] Disconnected from thread {self.thread_id}")
 
     async def receive(self, text_data=None, bytes_data=None):
@@ -128,5 +160,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 "type": "read",
                 "message_id": event["message_id"],
                 "user": event["user"],
+            })
+        )
+
+    async def chat_presence(self, event):
+        await self.send(
+            text_data=json.dumps({
+                "type": "presence",
+                "user": event["user"],
+                "online": event["online"],
             })
         )

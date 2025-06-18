@@ -332,3 +332,52 @@ class SimpleModelTest(TestCase):
         viewset.perform_create(serializer)
         mock_push.assert_called()
 
+
+from django.test import TransactionTestCase, override_settings
+from asgiref.sync import async_to_sync
+from channels.testing import WebsocketCommunicator
+from chat_svc.asgi import application
+
+
+class PresenceTest(TransactionTestCase):
+    """Verify websocket presence notifications."""
+
+    @override_settings(
+        CHANNEL_LAYERS={"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
+    )
+    def test_presence_events(self):
+        tenant = Tenant.objects.create(name='Acme')
+        alice = User.objects.create(username='alice', tenant=tenant)
+        bob = User.objects.create(username='bob', tenant=tenant)
+        thread = ChatThread.objects.create(tenant=tenant, incident_id='INC-PRES')
+
+        async def scenario():
+            com1 = WebsocketCommunicator(application, f"/ws/chat/{thread.id}/?token={create_token(alice)}")
+            connected, _ = await com1.connect()
+            assert connected
+
+            # first event is Alice coming online
+            evt = await com1.receive_json_from()
+            assert evt["type"] == "presence"
+            assert evt["user"] == "alice"
+            assert evt["online"] is True
+
+            com2 = WebsocketCommunicator(application, f"/ws/chat/{thread.id}/?token={create_token(bob)}")
+            connected, _ = await com2.connect()
+            assert connected
+
+            evt = await com1.receive_json_from()
+            assert evt["type"] == "presence"
+            assert evt["user"] == "bob"
+            assert evt["online"] is True
+
+            await com2.disconnect()
+            evt = await com1.receive_json_from()
+            assert evt["type"] == "presence"
+            assert evt["user"] == "bob"
+            assert evt["online"] is False
+
+            await com1.disconnect()
+
+        async_to_sync(scenario)()
+
