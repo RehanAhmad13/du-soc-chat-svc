@@ -26,7 +26,9 @@ export default function Chat() {
       .catch(() => setLoadError('Failed to load messages'))
 
     function connect(attempt = 0) {
-      const socket = new WebSocket(`/ws/chat/${id}/?token=${token}`)
+      const scheme = location.protocol === 'https:' ? 'wss' : 'ws'
+      const wsBase = import.meta.env.VITE_WS_BASE || `${scheme}://${location.host}/ws/chat`
+      const socket = new WebSocket(`${wsBase}/${id}/?token=${token}`)
       wsRef.current = socket
 
       socket.onmessage = evt => {
