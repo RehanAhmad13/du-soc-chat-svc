@@ -17,6 +17,7 @@ export default function Register() {
       setMessage(data.message || 'Registration successful')
       setTimeout(() => navigate('/login'), 1000)
     } catch (err) {
+      console.error(err)
       setError('Registration failed')
     }
   }

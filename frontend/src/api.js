@@ -1,45 +1,53 @@
 const API_BASE = '/api/chat'
 
+async function fetchWithRetry(url, options = {}, retries = 3, backoff = 500) {
+  try {
+    const res = await fetch(url, options)
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    return res
+  } catch (err) {
+    if (retries <= 0) throw err
+    await new Promise(resolve => setTimeout(resolve, backoff))
+    return fetchWithRetry(url, options, retries - 1, backoff * 2)
+  }
+}
+
 export async function login(username, password) {
-  const res = await fetch(`${API_BASE}/token/`, {
+  const res = await fetchWithRetry(`${API_BASE}/token/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password })
   })
-  if (!res.ok) throw new Error('Login failed')
   const data = await res.json()
   return data.token
 }
 
 export async function registerUser(username, password, inviteCode) {
-  const res = await fetch(`${API_BASE}/register/`, {
+  const res = await fetchWithRetry(`${API_BASE}/register/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password, invite_code: inviteCode })
   })
-  if (!res.ok) throw new Error('Registration failed')
   return res.json()
 }
 
 export async function getThreads(token) {
-  const res = await fetch(`${API_BASE}/threads/`, {
+  const res = await fetchWithRetry(`${API_BASE}/threads/`, {
     headers: { Authorization: `Bearer ${token}` }
   })
-  if (!res.ok) throw new Error('Failed to fetch threads')
   return res.json()
 }
 
 export async function getMessages(threadId, token) {
-  const res = await fetch(`${API_BASE}/messages/?thread=${threadId}`, {
+  const res = await fetchWithRetry(`${API_BASE}/messages/?thread=${threadId}`, {
     headers: { Authorization: `Bearer ${token}` }
   })
-  if (!res.ok) throw new Error('Failed to fetch messages')
   const data = await res.json()
   return Array.isArray(data) ? data.filter(m => m.thread === threadId) : data
 }
 
 export async function sendMessage(threadId, content, token) {
-  const res = await fetch(`${API_BASE}/messages/`, {
+  const res = await fetchWithRetry(`${API_BASE}/messages/`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -47,6 +55,5 @@ export async function sendMessage(threadId, content, token) {
     },
     body: JSON.stringify({ thread: threadId, content })
   })
-  if (!res.ok) throw new Error('Failed to send message')
   return res.json()
 }
