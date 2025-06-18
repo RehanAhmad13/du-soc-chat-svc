@@ -95,26 +95,31 @@ export default function Chat() {
   }
 
   return (
-    <div>
+    <div className="container mt-4">
       <h2>Thread {id}</h2>
-      {loadError && <p style={{ color: 'red' }}>{loadError}</p>}
-      {wsError && <p style={{ color: 'red' }}>{wsError}</p>}
-      <div>
-        Online: {online.join(', ')}
-      </div>
-      <ul>
+      {loadError && <p className="text-danger">{loadError}</p>}
+      {wsError && <p className="text-danger">{wsError}</p>}
+      <div className="mb-2">Online: {online.join(', ')}</div>
+      <ul className="list-group mb-3" aria-live="polite">
         {messages.map(m => (
-          <li key={m.id}>{m.sender}: {m.content}</li>
+          <li key={m.id} className="list-group-item">
+            {m.sender}: {m.content}
+          </li>
         ))}
       </ul>
-      <div>
+      <div className="mb-2">
         {typingUsers.length > 0 && (
           <em>{typingUsers.join(', ')} typing...</em>
         )}
       </div>
-      <form onSubmit={sendMessage}>
-        <input value={text} onChange={handleChange} />
-        <button type="submit">Send</button>
+      <form onSubmit={sendMessage} className="d-flex" aria-label="Send message">
+        <input
+          value={text}
+          onChange={handleChange}
+          className="form-control me-2"
+          aria-label="Message text"
+        />
+        <button type="submit" className="btn btn-primary">Send</button>
       </form>
     </div>
   )
