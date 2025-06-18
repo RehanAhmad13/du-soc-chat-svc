@@ -9,6 +9,7 @@ Built with Django REST Framework and Django Channels, the service ensures tenant
 - Real-time messaging (WebSockets via Django Channels)
 - Linked to alerts, incidents, and ITSM tickets
 - Tamper-evident logs and exportable transcripts
+- File attachments with encrypted storage
 - Mobile-ready (React Native parity)
 - Browser-based interface built with React for richer interaction
 
