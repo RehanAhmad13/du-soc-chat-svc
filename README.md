@@ -72,3 +72,10 @@ npm install        # install dependencies
 npm run dev        # start the development server
 npm run build      # build for production
 ```
+
+The frontend uses Vite environment variables to locate the backend APIs and WebSocket host. Copy `.env.example` to `.env` and adjust the values if the backend is hosted elsewhere:
+
+```bash
+cp frontend/.env.example frontend/.env
+```
+Modify `VITE_API_BASE` and `VITE_WS_BASE` as needed for your deployment.

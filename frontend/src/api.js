@@ -1,4 +1,4 @@
-const API_BASE = '/api/chat'
+const API_BASE = import.meta.env.VITE_API_BASE || '/api/chat'
 
 async function fetchWithRetry(url, options = {}, retries = 3, backoff = 500) {
   try {
