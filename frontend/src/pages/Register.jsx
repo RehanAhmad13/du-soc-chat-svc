@@ -1,27 +1,30 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { login } from '../api'
+import { registerUser } from '../api'
 
-export default function Login() {
+export default function Register() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [invite, setInvite] = useState('')
+  const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const navigate = useNavigate()
 
   async function handleSubmit(e) {
     e.preventDefault()
     try {
-      const token = await login(username, password)
-      localStorage.setItem('token', token)
-      navigate('/threads')
+      const data = await registerUser(username, password, invite)
+      setMessage(data.message || 'Registration successful')
+      setTimeout(() => navigate('/login'), 1000)
     } catch (err) {
-      setError('Invalid credentials')
+      setError('Registration failed')
     }
   }
 
   return (
     <form onSubmit={handleSubmit}>
-      <h2>Login</h2>
+      <h2>Register</h2>
+      {message && <p>{message}</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
       <div>
         <input
@@ -38,10 +41,15 @@ export default function Login() {
           onChange={e => setPassword(e.target.value)}
         />
       </div>
-      <button type="submit">Login</button>
-      <p>
-        Don't have an account? <a href="/register">Register</a>
-      </p>
+      <div>
+        <input
+          placeholder="Invite Code"
+          value={invite}
+          onChange={e => setInvite(e.target.value)}
+        />
+      </div>
+      <button type="submit">Register</button>
     </form>
   )
 }
+
