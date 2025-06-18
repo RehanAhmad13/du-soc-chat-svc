@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getMessages } from '../api'
+import { useAuth } from '../AuthContext'
 
 export default function Chat() {
   const { id } = useParams()
@@ -12,7 +13,7 @@ export default function Chat() {
   const [wsError, setWsError] = useState('')
   const wsRef = useRef(null)
   const navigate = useNavigate()
-  const token = localStorage.getItem('token')
+  const { token } = useAuth()
 
   useEffect(() => {
     if (!token) {
