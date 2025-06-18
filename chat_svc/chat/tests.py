@@ -133,6 +133,21 @@ class SimpleModelTest(TestCase):
         att = msg.attachments.first()
         self.assertTrue(att.checksum)
 
+    def test_message_creation_with_files(self):
+        tenant = Tenant.objects.create(name='Acme')
+        user = User.objects.create(username='alice', tenant=tenant)
+        thread = ChatThread.objects.create(tenant=tenant, incident_id='INC-5b')
+        view = MessageViewSet.as_view({'post': 'create'})
+        factory = APIRequestFactory()
+        file = SimpleUploadedFile('test.txt', b'hello')
+        token = create_token(user)
+        data = {'thread': thread.id, 'content': 'see file', 'files': [file]}
+        request = factory.post('/fake', data, format='multipart', HTTP_AUTHORIZATION=f'Bearer {token}')
+        response = view(request)
+        self.assertEqual(response.status_code, 201)
+        msg = Message.objects.get(id=response.data['id'])
+        self.assertEqual(msg.attachments.count(), 1)
+
     def test_search_messages(self):
         tenant = Tenant.objects.create(name='Acme')
         user = User.objects.create(username='alice', tenant=tenant)

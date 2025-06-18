@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.decorators import action, api_view, permission_classes
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
 from .models import (
     Tenant, ChatThread, Message, QuestionTemplate,
@@ -127,6 +127,7 @@ class MessageViewSet(viewsets.ModelViewSet):
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
     permission_classes = [IsAuthenticated]
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
 
     def get_queryset(self):
         return self.queryset.filter(thread__tenant_id=self.request.user.tenant_id)
@@ -134,7 +135,10 @@ class MessageViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         template = serializer.validated_data.pop('template', None)
         answer = serializer.validated_data.pop('answer', None)
+        files = serializer.validated_data.pop('files', [])
         msg = serializer.save(sender=self.request.user)
+        for f in files:
+            Attachment.objects.create(message=msg, file=f)
         template = template or msg.thread.template
         if template and answer is not None:
             StructuredReply.objects.create(message=msg, template=template, answer=answer)

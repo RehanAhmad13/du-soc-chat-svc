@@ -15,6 +15,12 @@ from .models import (
 class MessageSerializer(serializers.ModelSerializer):
     structured = serializers.SerializerMethodField()
     attachments = serializers.SerializerMethodField()
+    files = serializers.ListField(
+        child=serializers.FileField(),
+        write_only=True,
+        required=False,
+        allow_empty=True,
+    )
 
     template = serializers.PrimaryKeyRelatedField(
         queryset=QuestionTemplate.objects.all(),
@@ -99,7 +105,7 @@ class MessageSerializer(serializers.ModelSerializer):
         model = Message
         fields = [
             'id', 'thread', 'sender', 'content', 'created_at',
-            'structured', 'attachments', 'template', 'answer'
+            'structured', 'attachments', 'template', 'answer', 'files'
         ]
         read_only_fields = ['sender', 'created_at']
 
