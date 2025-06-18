@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DU SOC Chat</title>
+<style>
+body { font-family: Arial, sans-serif; margin: 1em; }
+#threads { margin-bottom: 2em; }
+#messages { border: 1px solid #ccc; padding: 1em; height: 300px; overflow-y: scroll; }
+.message { margin-bottom: .5em; }
+.sender { font-weight: bold; }
+#inputArea { margin-top: 1em; }
+textarea { width: 100%; height: 4em; }
+</style>
+</head>
+<body>
+<h1>DU SOC Chat</h1>
+<div id="login">
+  <input id="username" placeholder="Username">
+  <input id="password" type="password" placeholder="Password">
+  <button onclick="login()">Login</button>
+</div>
+<div id="threads" style="display:none">
+  <h2>Threads</h2>
+  <ul id="threadList"></ul>
+</div>
+<div id="chat" style="display:none">
+  <h2 id="threadTitle"></h2>
+  <div id="instructions" style="color: #555"></div>
+  <div id="messages"></div>
+  <div id="inputArea">
+    <textarea id="msgInput" placeholder="Type your message..."></textarea>
+    <button onclick="sendMessage()">Send</button>
+  </div>
+</div>
+<script>
+let token = null;
+let socket = null;
+let currentThread = null;
+
+function login() {
+  const u = document.getElementById('username').value;
+  const p = document.getElementById('password').value;
+  fetch('/api/chat/token/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: u, password: p })
+  }).then(r => r.json()).then(data => {
+    if (data.token) {
+      token = data.token;
+      document.getElementById('login').style.display = 'none';
+      loadThreads();
+    } else {
+      alert('Login failed');
+    }
+  });
+}
+
+function loadThreads() {
+  fetch('/api/chat/threads/', {
+    headers: { 'Authorization': 'Bearer ' + token }
+  }).then(r => r.json()).then(data => {
+    document.getElementById('threads').style.display = 'block';
+    const list = document.getElementById('threadList');
+    list.innerHTML = '';
+    data.forEach(t => {
+      const li = document.createElement('li');
+      li.textContent = t.incident_id + ' (ID ' + t.id + ')';
+      li.style.cursor = 'pointer';
+      li.onclick = () => openThread(t);
+      list.appendChild(li);
+    });
+  });
+}
+
+function openThread(thread) {
+  currentThread = thread;
+  document.getElementById('chat').style.display = 'block';
+  document.getElementById('threadTitle').textContent = 'Incident ' + thread.incident_id;
+  document.getElementById('instructions').textContent = 'Please answer any structured prompts in JSON first, then chat freely.';
+  document.getElementById('messages').innerHTML = '';
+
+  if (socket) socket.close();
+  socket = new WebSocket(`ws://${location.host}/ws/chat/${thread.id}/?token=${token}`);
+  socket.onmessage = e => {
+    const data = JSON.parse(e.data);
+    if (data.type === 'message') {
+      addMessage(data.sender, data.content);
+    }
+  };
+
+  // load existing messages
+  fetch(`/api/chat/threads/${thread.id}/`, {
+    headers: { 'Authorization': 'Bearer ' + token }
+  }).then(r => r.json()).then(data => {
+    const msgs = data.messages || [];
+    msgs.forEach(m => addMessage(m.sender, m.content));
+  });
+}
+
+function addMessage(sender, content) {
+  const wrap = document.createElement('div');
+  wrap.className = 'message';
+  wrap.innerHTML = `<span class='sender'>${sender}:</span> ${content}`;
+  document.getElementById('messages').appendChild(wrap);
+}
+
+function sendMessage() {
+  const text = document.getElementById('msgInput').value;
+  if (!text || !socket) return;
+  socket.send(JSON.stringify({ type: 'message', content: text }));
+  document.getElementById('msgInput').value = '';
+}
+</script>
+</body>
+</html>
