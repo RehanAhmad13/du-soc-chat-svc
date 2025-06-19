@@ -3,6 +3,10 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../AuthContext'
 import './AppFeatures.css'
 import NewTemplateModal from '../components/NewTemplateModal'
+import UserApprovalTable from '../components/UserApprovalTable'
+import TenantCard from '../components/TenantCard'
+import TemplatesView from '../components/TemplatesView'
+import ThreadsSummaryChart from '../components/ThreadsSummaryChart'
 
 export default function AdminUsers() {
   const { token } = useAuth()
@@ -89,8 +93,6 @@ export default function AdminUsers() {
     threads: threads.filter(th => th.tenant_id === t.id)
   }))
 
-  const globalTemplates = templates.filter(t => !t.tenant_id)
-
   function toggleTemplateExpand(index) {
     setTemplates(prev =>
       prev.map((t, i) =>
@@ -106,165 +108,27 @@ export default function AdminUsers() {
       {message && <div className="alert success">{message}</div>}
       {error && <div className="alert error">{error}</div>}
 
-      <div className="section-card">
-        <div className="card-header">Pending User Approvals</div>
-        <div className="card-body">
-          {pendingUsers.length === 0 ? (
-            <p className="no-data">No pending users.</p>
-          ) : (
-            <div className="table-responsive">
-              <table className="styled-table">
-                <thead>
-                  <tr>
-                    <th>Username</th>
-                    <th>Email</th>
-                    <th>Current Tenant</th>
-                    <th>Assign To</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pendingUsers.map(user => (
-                    <tr key={user.id}>
-                      <td>{user.username}</td>
-                      <td>{user.email || '—'}</td>
-                      <td>{user.tenant || '—'}</td>
-                      <td>
-                        <select
-                          className="form-select"
-                          value={selectedTenants[user.id] || ''}
-                          onChange={e =>
-                            setSelectedTenants(prev => ({
-                              ...prev,
-                              [user.id]: e.target.value
-                            }))
-                          }
-                        >
-                          <option value="">-- Select Tenant --</option>
-                          {tenants.map(t => (
-                            <option key={t.id} value={t.id}>
-                              {t.name}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-                      <td>
-                        <button
-                          className="btn approve-btn"
-                          onClick={() => approveUser(user.id)}
-                        >
-                          Approve
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </div>
+      <UserApprovalTable
+        pendingUsers={pendingUsers}
+        tenants={tenants}
+        selectedTenants={selectedTenants}
+        setSelectedTenants={setSelectedTenants}
+        approveUser={approveUser}
+      />
+
+      <ThreadsSummaryChart tenants={tenants} threads={threads} />
 
       <div className="tenant-grid">
         {threadsByTenant.map(({ tenant, threads }) => (
-          <div key={tenant.id} className="tenant-card">
-            <div className="tenant-header">{tenant.name}</div>
-            <div className="tenant-body">
-              <div className="subheading">Threads</div>
-              {threads.length === 0 ? (
-                <p className="no-data">No threads yet.</p>
-              ) : (
-                <ul className="list">
-                  {threads.map(th => (
-                    <li key={th.id} style={{ marginBottom: '0.8rem' }}>
-                      <strong>INC:</strong> {th.incident_id}{' '}
-                      <em>(#{th.id})</em>
-                      <div style={{ marginTop: '0.3rem' }}>
-                        <a
-                          href={`/api/chat/export/thread/${th.id}/?format=json`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="btn btn-sm btn-outline-secondary"
-                          style={{ marginRight: '0.5rem' }}
-                        >
-                          Export JSON
-                        </a>
-                        <a
-                          href={`/api/chat/export/thread/${th.id}/?format=csv`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="btn btn-sm btn-outline-secondary"
-                        >
-                          Export CSV
-                        </a>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-
-              <div className="subheading">Users</div>
-              {tenant.users && tenant.users.length ? (
-                <ul className="list">
-                  {tenant.users.map(u => (
-                    <li key={u.id}>
-                      {u.username}{' '}
-                      <span className="text-muted">({u.email || '—'})</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="no-data">No active users.</p>
-              )}
-            </div>
-          </div>
+          <TenantCard key={tenant.id} tenant={tenant} threads={threads} />
         ))}
       </div>
 
-      <div className="section-card templates-card">
-        <div className="card-header d-flex justify-content-between align-items-center">
-          <span>Global Templates</span>
-          <button
-            className="btn btn-outline-primary btn-sm"
-            onClick={() => setShowNewTemplateModal(true)}
-          >
-            + New Template
-          </button>
-        </div>
-        <div className="card-body">
-          {globalTemplates.length === 0 ? (
-            <p className="no-data">No global templates yet.</p>
-          ) : (
-            globalTemplates.map((tpl, i) => (
-              <div
-                key={i}
-                className={`template-item ${tpl.expanded ? 'expanded' : ''}`}
-                onClick={() => toggleTemplateExpand(i)}
-              >
-                <div className="template-name">
-                  {tpl.name || 'Unnamed Template'}
-                </div>
-                {tpl.expanded && (
-                  <>
-                    <div className="template-text">{tpl.text}</div>
-                    <div className="template-schema">
-                      Fields:
-                      <ul style={{ paddingLeft: '1.2rem', marginTop: '0.3rem' }}>
-                        {Object.entries(tpl.schema || {}).map(([field, info]) => (
-                          <li key={field}>
-                            <strong>{field}</strong> ({info.type}
-                            {info.options ? `: ${info.options.join(', ')}` : ''})
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </>
-                )}
-              </div>
-            ))
-          )}
-        </div>
-      </div>
+      <TemplatesView
+        templates={templates}
+        toggleTemplateExpand={toggleTemplateExpand}
+        onNew={() => setShowNewTemplateModal(true)}
+      />
 
       {showNewTemplateModal && (
         <NewTemplateModal
