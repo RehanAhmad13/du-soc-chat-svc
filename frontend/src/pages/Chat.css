@@ -1,0 +1,85 @@
+.chat-wrapper {
+  padding: 2rem;
+  max-width: 900px;
+  margin: auto;
+  font-family: 'Segoe UI', sans-serif;
+  color: #ddd;
+}
+
+.chat-header {
+  margin-bottom: 1rem;
+}
+
+.chat-box {
+  min-height: 300px;
+  background-color: #121212;
+  padding: 1rem;
+  border-radius: 1rem;
+  margin-bottom: 1rem;
+  overflow-y: auto;
+}
+
+.chat-bubble {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border-radius: 1rem;
+  background-color: #1e1e1e;
+}
+
+.chat-bubble.own {
+  background-color: #2b2b2b;
+  text-align: right;
+}
+
+.chat-input {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid #333;
+  background: #222;
+  color: white;
+  border-radius: 8px;
+}
+
+.chat-form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.chat-send-btn {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.chat-send-btn:hover {
+  background-color: #0056b3;
+}
+
+.chat-toggle-btn {
+  background-color: #333;
+  color: white;
+  border: 1px solid #555;
+  padding: 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.chat-cancel-btn {
+  background-color: #aa2222;
+  color: white;
+  padding: 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.structured-bubble pre {
+  background: #181818;
+  color: #0f0;
+  font-size: 0.85rem;
+  border-radius: 6px;
+  padding: 0.5rem;
+  overflow-x: auto;
+}
