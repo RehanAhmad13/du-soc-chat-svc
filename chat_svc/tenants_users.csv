@@ -1,0 +1,26 @@
+tenant_name,username,password,email,is_staff,is_active
+Alpha Corp,amina,aminapass,amina@example.com,False,True
+Beta Ltd,bilal,bilalpass,bilal@example.com,False,True
+Gamma Org,cyrus,cyruspass,cyrus@example.com,True,True
+Delta Inc,dania,daniapass,dania@example.com,False,False
+,erum,erumpass,erum@example.com,False,False
+,junaid,junaidpass,junaid@example.com,False,False
+Alpha Corp,khadija,khadijapass,khadija@example.com,False,True
+Alpha Corp,usman,usmanpass,usman@example.com,False,True
+Beta Ltd,sarah,sarahpass,sarah@example.com,True,True
+Beta Ltd,ahmed,ahmedpass,ahmed@example.com,False,True
+Gamma Org,zoya,zoyapass,zoya@example.com,False,True
+Gamma Org,nabeel,nabeelpass,nabeel@example.com,False,True
+Delta Inc,fatima,fatimapass,fatima@example.com,False,True
+Delta Inc,talha,talhapass,talha@example.com,False,True
+Alpha Corp,hassan,hassanpass,hassan@example.com,False,True
+,mariam,mariampass,mariam@example.com,False,False
+,yasir,yasirpass,yasir@example.com,False,False
+,sana,sanapass,sana@example.com,False,False
+,ali,alipass,ali@example.com,False,False
+Beta Ltd,ayesha,ayeshapass,ayesha@example.com,False,True
+Gamma Org,faraz,farazpass,faraz@example.com,True,True
+Delta Inc,saad,saadpass,saad@example.com,False,True
+Alpha Corp,laiba,laibapass,laiba@example.com,False,True
+,imran,imranpass,imran@example.com,False,False
+,noor,noorpass,noor@example.com,False,False

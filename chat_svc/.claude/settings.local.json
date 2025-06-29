@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(PYTHONPATH=/Users/rehanahmad/Desktop/CISCO/du-soc-chat-svc-main/chat_svc python ../manage.py migrate)",
+      "Bash(pip install:*)",
+      "Bash(grep:*)",
+      "Bash(PYTHONPATH=/Users/rehanahmad/Desktop/CISCO/du-soc-chat-svc-main/chat_svc python ../manage.py makemigrations chat_svc)",
+      "Bash(rm:*)",
+      "Bash(PYTHONPATH=/Users/rehanahmad/Desktop/CISCO/du-soc-chat-svc-main/chat_svc python ../manage.py check)",
+      "Bash(PYTHONPATH=/Users/rehanahmad/Desktop/CISCO/du-soc-chat-svc-main/chat_svc python ../manage.py create_superuser --username admin --password admin123)",
+      "Bash(PYTHONPATH=/Users/rehanahmad/Desktop/CISCO/du-soc-chat-svc-main/chat_svc python ../manage.py showmigrations)"
+    ],
+    "deny": []
+  }
+}
