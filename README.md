@@ -1,25 +1,13 @@
-# DU SOC Chat Service
+# Chat Service
 
-This repository implements a secure, real-time, multi-tenant chat subsystem for the DU SOC Portal.  
-Built with Django REST Framework and Django Channels, the service ensures tenant isolation, auditability, and seamless backend integration with SIEM/SOAR/ITSM tools.
-
-## Key Features
+This repository contains a mini-project assigned by my advisor in which I was assigned to developing the backend of a microservice requested by one of the organization's clients.  The backend was built with Django REST Framework and Django Channels. It includes the following key functionalities: tenant isolation and auditability. Key functionaltiies are: 
 - Tenant-isolated chat threads
 - Structured communication via question templates
 - Real-time messaging (WebSockets via Django Channels)
-- Linked to alerts, incidents, and ITSM tickets
-- Tamper-evident logs and exportable transcripts
-- File attachments with encrypted storage
-- Mobile-ready (React Native parity)
-- Browser-based interface built with React for richer interaction
+
 
 ## Architecture Overview
-The chat service is built as a standalone Django project using Django REST Framework for APIs and Django Channels for WebSocket support. Each tenant operates within an isolated schema or database, ensuring strict segregation of data. Redis serves as the channel layer backend for real-time message fan-out and presence tracking.
-
-### Tenant Isolation
-- All authentication tokens include a tenant identifier claim.
-- Database queries and WebSocket connections are scoped to the tenant context.
-- Message and file objects contain a `tenant_id` field that is enforced through DRF permissions and Channels middleware.
+The chat service is built using Django REST Framework for APIs and Django Channels for WebSocket support. Each tenant operates within an isolated schema or database which ensures strict segregation of data. Redis serves as the channel layer backend for real-time messaging and presence tracking. All authentication tokens include a tenant identifier claim.Message and file objects contain a `tenant_id` field that is enforced through DRF permissions and Channels middleware. Here are all the details
 
 ### Real-Time Communication
 - WebSocket endpoints use JWT authentication to establish a session bound to a tenant.
@@ -32,14 +20,6 @@ SOC administrators define question templates that capture structured fields (tex
 ### Message Storage & Audit
 Messages are stored in an append-only model with creation timestamps and immutable hashes. Files are stored in a secure object store with SHA-256 checksums recorded for audit trails. Retention policies are applied per tenant via scheduled cleanup tasks.
 
-### Integrations
-Each chat thread records the related alert or ticket identifiers. Dedicated API endpoints allow incidents to spawn chat threads which are automatically linked to their alert/incident IDs. When a message is posted the transcript is forwarded to the ITSM ticket timeline (see `update_ticket_timeline`).
-The target ITSM endpoint is configured via the `ITSM_API_URL` environment variable and authenticated using `ITSM_API_TOKEN` if provided.
-SLA status for each thread is determined based on the `INCIDENT_SLA_HOURS` environment variable (default `24`).
-
-### Deployment & Scaling
-The service runs in its own container within the Kubernetes cluster. Redis Cluster is required for the Channels layer, and the app can scale out across pods without sticky sessions. TLS termination is handled at the ingress layer, with end-to-end encryption enforced.
-
 ### Security Considerations
 - JWT-based auth with tenant-scoped claims
 - AES-256 encryption at rest for database and file storage
@@ -48,7 +28,7 @@ The service runs in its own container within the Kubernetes cluster. Redis Clust
 
 
 ## Getting Started
-This repository contains a minimal Django project skeleton for the chat service.
+This repository contains a minimal Django project skeleton for the chat service. 
 To run the unit tests:
 
 ```bash
@@ -64,7 +44,7 @@ Both file and database encryption use AES-256 keys configured via the
 provided, random keys are generated at startup.
 
 ## Frontend
-A React application powered by [Vite](https://vitejs.dev/) lives in the `frontend/` directory. It demonstrates basic routing and local state management for a chat interface.
+A React application powered by [Vite](https://vitejs.dev/) lives in the `frontend/` directory. It demonstrates basic routing and local state management for a chat interface. The frontend was built as a proof-of-concept and to test that the backend functionality works properly rather than for actual proper development (thus the lacklustre design and missing components). 
 
 ```bash
 cd frontend
@@ -73,25 +53,3 @@ npm run dev        # start the development server
 npm run build      # build for production
 ```
 
-The frontend uses Vite environment variables to locate the backend APIs and WebSocket host. Copy `.env.example` to `.env` and adjust the values if the backend is hosted elsewhere:
-
-```bash
-cp frontend/.env.example frontend/.env
-```
-Modify `VITE_API_BASE` and `VITE_WS_BASE` as needed for your deployment.
-
-## Build & Deployment
-
-To create a production bundle of the React app and collect static files run:
-
-```bash
-npm run build --prefix frontend
-python manage.py collectstatic --noinput
-```
-
-A sample Dockerfile is included for container builds:
-
-```bash
-docker build -t du-soc-chat-svc .
-docker run -p 8000:8000 du-soc-chat-svc
-```
